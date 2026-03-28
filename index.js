@@ -48,10 +48,10 @@ function createEmbed(data) {
   tools.forEach(name => {
     let status = data[name];
     let icon = status === "safe" ? "🟢" : "🔴";
-    let text = status === "safe" ? "SAFE" : "UPDATE";
+    let text = status === "safe" ? "Safe" : "Update";
 
     embed.addFields({
-      name: `🌐 ${name}`,
+      name: `📎 ${name}`,
       value: `Status: ${icon} ${text}`,
       inline: false
     });
