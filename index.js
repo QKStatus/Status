@@ -48,10 +48,10 @@ function createEmbed(data) {
   tools.forEach(name => {
     let status = data[name];
     let icon = status === "safe" ? "🟢" : "🔴";
-    let text = status === "safe" ? "Safe" : "Update";
+    let text = status === "safe" ? "SAFE" : "UPDATE";
 
     embed.addFields({
-      name: `🔹 ${name}`,
+      name: `🌐 ${name}`,
       value: `Status: ${icon} ${text}`,
       inline: false
     });
@@ -65,7 +65,7 @@ function createButtons() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId("edit_status")
-      .setLabel("⚙️ Chỉnh trạng thái")
+      .setLabel("⚙️ Edit Status")
       .setStyle(ButtonStyle.Primary)
   );
 }
@@ -75,7 +75,7 @@ function toolMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("select_tool")
-      .setPlaceholder("Chọn tool")
+      .setPlaceholder("Chọn item")
       .addOptions([
         { label: "Fluorite", value: "Fluorite" },
         { label: "Migul VN", value: "Migul VN" },
