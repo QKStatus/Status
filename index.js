@@ -43,15 +43,20 @@ function createEmbed(data) {
     .setColor(0x00AEFF)
     .setTimestamp();
 
-  const tools = ["Fluorite", "Migul VN", "Sonic", "Proxy Aim"];
+  const tools = [
+    { name: "Fluorite", emoji: "💎" },
+    { name: "Migul VN", emoji: "🔥" },
+    { name: "Sonic", emoji: "⚡" },
+    { name: "Proxy Aim", emoji: "🎯" }
+  ];
 
-  tools.forEach(name => {
-    let status = data[name];
+  tools.forEach(t => {
+    let status = data[t.name];
     let icon = status === "safe" ? "🟢" : "🔴";
     let text = status === "safe" ? "Safe" : "Update";
 
     embed.addFields({
-      name: `📎 ${name}`,
+      name: `${t.emoji} ${t.name}`,
       value: `Status: ${icon} ${text}`,
       inline: false
     });
@@ -62,12 +67,36 @@ function createEmbed(data) {
 
 // ===== BUTTON =====
 function createButtons() {
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId("edit_status")
-      .setLabel("⚙️ Edit Status")
-      .setStyle(ButtonStyle.Primary)
-  );
+  return [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("edit_status")
+        .setLabel("⚙️ Edit Status")
+        .setStyle(ButtonStyle.Primary)
+    ),
+
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("download_fluorite")
+        .setLabel("💎 Fluorite")
+        .setStyle(ButtonStyle.Secondary),
+
+      new ButtonBuilder()
+        .setCustomId("download_migul")
+        .setLabel("🔥 Migul VN")
+        .setStyle(ButtonStyle.Secondary),
+
+      new ButtonBuilder()
+        .setCustomId("download_sonic")
+        .setLabel("⚡ Sonic")
+        .setStyle(ButtonStyle.Secondary),
+
+      new ButtonBuilder()
+        .setCustomId("download_proxy")
+        .setLabel("🎯 Proxy Aim")
+        .setStyle(ButtonStyle.Secondary)
+    )
+  ];
 }
 
 // ===== MENU =====
@@ -75,7 +104,7 @@ function toolMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("select_tool")
-      .setPlaceholder("Chọn item")
+      .setPlaceholder("Chọn tool")
       .addOptions([
         { label: "Fluorite", value: "Fluorite" },
         { label: "Migul VN", value: "Migul VN" },
@@ -115,7 +144,7 @@ client.once("ready", async () => {
   if (!message) {
     message = await channel.send({
       embeds: [createEmbed(data)],
-      components: [createButtons()]
+      components: createButtons()
     });
 
     data.messageId = message.id;
@@ -123,7 +152,7 @@ client.once("ready", async () => {
   } else {
     await message.edit({
       embeds: [createEmbed(data)],
-      components: [createButtons()]
+      components: createButtons()
     });
   }
 });
@@ -134,18 +163,57 @@ client.on("interactionCreate", async interaction => {
 
   const data = loadData();
 
+  // ===== BUTTON =====
   if (interaction.isButton()) {
+
+    // ===== DOWNLOAD (AI CŨNG DÙNG) =====
+    if (interaction.customId.startsWith("download_")) {
+      let link = "";
+      let name = "";
+
+      switch (interaction.customId) {
+        case "download_fluorite":
+          name = "Fluorite";
+          link = "https://www.mediafire.com/file/88zoe08gtgc9wfx/FF_1.120.1_1.7.1.ipa/file";
+          break;
+
+        case "download_migul":
+          name = "Migul VN";
+          link = "https://www.mediafire.com/file/7xjc7fqb7xybbys/Free_Fire_1.120.1_1774083029.ipa/file";
+          break;
+
+        case "download_sonic":
+          name = "Sonic";
+          link = "https://www.mediafire.com/file/69ym6nmiye9cuwd/Free_Fire_1.120.1_1773767109.ipa/file";
+          break;
+
+        case "download_proxy":
+          name = "Proxy Aim";
+          link = "❌ Vui lòng mua để được cấp link tải";
+          break;
+      }
+
+      return interaction.reply({
+        content: `📥 **${name}**:\n${link}`,
+        ephemeral: true
+      });
+    }
+
+    // ===== ADMIN =====
     if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
       return interaction.reply({ content: "❌ Không phải admin", ephemeral: true });
     }
 
-    return interaction.reply({
-      content: "Chọn tool:",
-      components: [toolMenu()],
-      ephemeral: true
-    });
+    if (interaction.customId === "edit_status") {
+      return interaction.reply({
+        content: "Chọn tool:",
+        components: [toolMenu()],
+        ephemeral: true
+      });
+    }
   }
 
+  // ===== MENU =====
   if (interaction.customId === "select_tool") {
     const tool = interaction.values[0];
 
@@ -167,7 +235,7 @@ client.on("interactionCreate", async interaction => {
 
     await message.edit({
       embeds: [createEmbed(data)],
-      components: [createButtons()]
+      components: createButtons()
     });
 
     return interaction.update({
