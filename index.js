@@ -73,7 +73,7 @@ function createButtons() {
   ];
 }
 
-// ===== MENU DOWNLOAD =====
+// ===== DOWNLOAD MENU =====
 function downloadMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
@@ -287,19 +287,85 @@ client.on("interactionCreate", async interaction => {
 
     const logCh = await client.channels.fetch(LOG_CHANNEL_ID);
 
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`approve_${interaction.user.id}`)
+        .setLabel("✅ Duyệt")
+        .setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setCustomId(`deny_${interaction.user.id}`)
+        .setLabel("❌ Từ chối")
+        .setStyle(ButtonStyle.Danger)
+    );
+
+    const now = new Date().toLocaleString("vi-VN");
+
     await logCh.send({
       embeds: [
         new EmbedBuilder()
-          .setTitle("🧾 Đơn hàng")
+          .setTitle("🧾 ĐƠN HÀNG MỚI")
+          .setColor(0x00AEFF)
           .addFields(
-            { name: "User", value: `<@${interaction.user.id}>` },
-            { name: "Gói", value: `${order.type} (${order.time})` },
-            { name: "Giá", value: `${order.price}K` }
+            { name: "👤 Người mua", value: `<@${interaction.user.id}>`, inline: true },
+            { name: "📦 Vật phẩm", value: `${order.type} (${order.time})`, inline: true },
+            { name: "💰 Giá trị", value: `${order.price}K`, inline: true },
+            { name: "⏰ Thời gian", value: now }
           )
-      ]
+      ],
+      components: [row]
     });
 
     return interaction.reply({ content: "🧾 Đã gửi chờ admin duyệt", ephemeral: true });
+  }
+
+  // ===== DUYỆT =====
+  if (interaction.customId.startsWith("approve_")) {
+    if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator))
+      return;
+
+    const userId = interaction.customId.split("_")[1];
+
+    const modal = new ModalBuilder()
+      .setCustomId(`key_${userId}`)
+      .setTitle("🔑 Nhập key");
+
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId("key_input")
+          .setLabel("Nhập key")
+          .setStyle(TextInputStyle.Short)
+      )
+    );
+
+    return interaction.showModal(modal);
+  }
+
+  // ===== GỬI KEY =====
+  if (interaction.customId.startsWith("key_")) {
+    if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator))
+      return;
+
+    const userId = interaction.customId.split("_")[1];
+    const key = interaction.fields.getTextInputValue("key_input");
+
+    const user = await client.users.fetch(userId);
+    await user.send(`🔑 Key của bạn: **${key}**`);
+
+    return interaction.reply({ content: "✅ Đã gửi key", ephemeral: true });
+  }
+
+  // ===== TỪ CHỐI =====
+  if (interaction.customId.startsWith("deny_")) {
+    if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator))
+      return;
+
+    const userId = interaction.customId.split("_")[1];
+    const user = await client.users.fetch(userId);
+
+    await user.send("💸 Bỏ tiền ra đi sẽ có nhé em 😏");
+
+    return interaction.reply({ content: "❌ Đã từ chối", ephemeral: true });
   }
 });
 
