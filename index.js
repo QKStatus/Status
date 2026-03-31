@@ -10,7 +10,8 @@ const {
   StringSelectMenuBuilder,
   ModalBuilder,
   TextInputBuilder,
-  TextInputStyle
+  TextInputStyle,
+  PermissionsBitField
 } = require("discord.js");
 
 const fs = require("fs");
@@ -23,10 +24,7 @@ const BANK_ACC = process.env.BANK_ACC;
 const BANK_NAME = process.env.BANK_NAME || "MB";
 
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages
-  ]
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages]
 });
 
 // ===== DATA =====
@@ -55,6 +53,13 @@ function generateOrderId() {
   return "HD" + Math.floor(Math.random() * 1000000);
 }
 
+function getExpireDate(time) {
+  const now = new Date();
+  if (time === "week") now.setDate(now.getDate() + 7);
+  if (time === "month") now.setMonth(now.getMonth() + 1);
+  return now.toLocaleString("vi-VN");
+}
+
 // ===== EMBED =====
 function createEmbed(data) {
   const embed = new EmbedBuilder()
@@ -80,6 +85,32 @@ function createButtons() {
   ];
 }
 
+// ===== STATUS MENU =====
+function statusToolMenu() {
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId("status_tool")
+      .addOptions([
+        { label: "Fluorite", value: "Fluorite" },
+        { label: "Migul VN", value: "Migul VN" },
+        { label: "Sonic", value: "Sonic" },
+        { label: "Proxy Aim", value: "Proxy Aim" }
+      ])
+  );
+}
+
+function statusValueMenu(tool) {
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId(`status_value_${tool}`)
+      .addOptions([
+        { label: "🟢 SAFE", value: "safe" },
+        { label: "🔴 UPDATE", value: "update" }
+      ])
+  );
+}
+
+// ===== DOWNLOAD =====
 function downloadMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
@@ -93,6 +124,7 @@ function downloadMenu() {
   );
 }
 
+// ===== BUY =====
 function proxyMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
@@ -149,12 +181,45 @@ client.once("ready", async () => {
 client.on("interactionCreate", async interaction => {
   if (!interaction.isButton() && !interaction.isStringSelectMenu() && !interaction.isModalSubmit()) return;
 
-  // ===== STATUS =====
+  // ===== STATUS ADMIN =====
   if (interaction.customId === "edit_status") {
-    return interaction.reply({
-      content: "⚙️ Chức năng đang cập nhật...",
-      ephemeral: true
+    if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+      return interaction.reply({ content: "❌ Chỉ admin!", ephemeral: true });
+    }
+    return interaction.reply({ content: "⚙️ Chọn tool:", components: [statusToolMenu()], ephemeral: true });
+  }
+
+  if (interaction.customId === "status_tool") {
+    if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+      return interaction.reply({ content: "❌ Không có quyền!", ephemeral: true });
+    }
+    return interaction.update({
+      content: "🔧 Chọn trạng thái:",
+      components: [statusValueMenu(interaction.values[0])]
     });
+  }
+
+  if (interaction.customId.startsWith("status_value_")) {
+    if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+      return interaction.reply({ content: "❌ Không có quyền!", ephemeral: true });
+    }
+
+    const tool = interaction.customId.replace("status_value_", "");
+    const value = interaction.values[0];
+
+    const data = loadData();
+    data[tool] = value;
+    saveData(data);
+
+    const channel = await client.channels.fetch(CHANNEL_ID);
+    const msg = await channel.messages.fetch(data.messageId);
+
+    await msg.edit({
+      embeds: [createEmbed(data)],
+      components: createButtons()
+    });
+
+    return interaction.update({ content: "✅ Đã cập nhật!", components: [] });
   }
 
   // ===== DOWNLOAD =====
@@ -172,7 +237,7 @@ client.on("interactionCreate", async interaction => {
     };
 
     if (interaction.values[0] === "proxy") {
-      return interaction.editReply({ content: "🔒 Phải mua mới có!", components: [] });
+      return interaction.editReply({ content: "🔒 Phải mua!", components: [] });
     }
 
     return interaction.editReply({
@@ -183,11 +248,7 @@ client.on("interactionCreate", async interaction => {
 
   // ===== BUY =====
   if (interaction.customId === "buy_proxy") {
-    return interaction.reply({
-      content: "💰 Chọn loại proxy:",
-      components: [proxyMenu()],
-      ephemeral: true
-    });
+    return interaction.reply({ content: "💰 Chọn loại:", components: [proxyMenu()], ephemeral: true });
   }
 
   if (interaction.customId === "proxy_type") {
@@ -206,7 +267,6 @@ client.on("interactionCreate", async interaction => {
     const price = prices[type][time];
 
     const orderId = generateOrderId();
-
     orders.set(interaction.user.id, { type, time, price, orderId });
 
     const qr = createQR(price, interaction.user.id, type, time, orderId);
@@ -230,20 +290,16 @@ client.on("interactionCreate", async interaction => {
     });
   }
 
-  // ===== SEND ADMIN =====
   if (interaction.customId === "confirm_bank") {
     const order = orders.get(interaction.user.id);
-    if (!order) return interaction.reply({ content: "❌ Không có đơn!", ephemeral: true });
-
     const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
 
     const embed = new EmbedBuilder()
-      .setTitle("📩 Đơn hàng mới")
+      .setTitle("📩 Đơn hàng")
       .addFields(
         { name: "👤 Người mua", value: `<@${interaction.user.id}>` },
-        { name: "📦 Gói", value: `${order.type} (${order.time})` },
-        { name: "💰 Giá", value: `${order.price}K` },
-        { name: "🧾 Mã đơn", value: order.orderId }
+        { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
+        { name: "💰 Giá", value: `${order.price}K` }
       );
 
     const row = new ActionRowBuilder().addComponents(
@@ -262,11 +318,11 @@ client.on("interactionCreate", async interaction => {
 
     const modal = new ModalBuilder()
       .setCustomId(`sendkey_${userId}`)
-      .setTitle("Nhập key gửi khách");
+      .setTitle("Nhập key");
 
     const input = new TextInputBuilder()
       .setCustomId("key")
-      .setLabel("Nhập key")
+      .setLabel("Key")
       .setStyle(TextInputStyle.Short);
 
     modal.addComponents(new ActionRowBuilder().addComponents(input));
@@ -274,24 +330,46 @@ client.on("interactionCreate", async interaction => {
     return interaction.showModal(modal);
   }
 
-  // ===== MODAL =====
   if (interaction.customId.startsWith("sendkey_")) {
     const userId = interaction.customId.split("_")[1];
     const key = interaction.fields.getTextInputValue("key");
 
+    const order = orders.get(userId);
+    const expire = getExpireDate(order.time);
+
     const user = await client.users.fetch(userId);
 
-    await user.send(`🔑 Key của bạn: ${key}`);
+    const embed = new EmbedBuilder()
+      .setTitle("🧾 Hoá đơn")
+      .setColor("Green")
+      .addFields(
+        { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
+        { name: "💰 Giá tiền", value: `${order.price}K` },
+        { name: "⏳ Thời gian", value: expire },
+        { name: "🔑 Key", value: `\`${key}\`` }
+      );
 
-    return interaction.reply({ content: "✅ Đã gửi key!", ephemeral: true });
+    await user.send({ embeds: [embed] });
+
+    return interaction.reply({ content: "✅ Đã gửi!", ephemeral: true });
   }
 
   // ===== REJECT =====
   if (interaction.customId.startsWith("reject_")) {
     const userId = interaction.customId.split("_")[1];
+    const order = orders.get(userId);
     const user = await client.users.fetch(userId);
 
-    await user.send("Bỏ tiền ra đi sẽ có nhé em 😏");
+    const embed = new EmbedBuilder()
+      .setTitle("🧾 Hoá đơn")
+      .setColor("Red")
+      .addFields(
+        { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
+        { name: "💰 Giá tiền", value: `${order.price}K` },
+        { name: "🔑 Key", value: "💳 Bank để nhận key" }
+      );
+
+    await user.send({ embeds: [embed] });
 
     return interaction.reply({ content: "❌ Đã từ chối!", ephemeral: true });
   }
