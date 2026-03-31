@@ -83,7 +83,7 @@ function createButtons() {
   return [
     new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId("edit_status").setLabel("⚙️ Trạng Thái").setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId("download_menu").setLabel("📥 Tải Hack").setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId("download_menu").setLabel("📥 Link Tải").setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId("buy_proxy").setLabel("💰 Buy Proxy").setStyle(ButtonStyle.Success)
     )
   ];
@@ -153,8 +153,8 @@ function timeMenu(type) {
     new StringSelectMenuBuilder()
       .setCustomId(`time_${type}`)
       .addOptions([
-        { label: `Week - ${p.week}K`, value: "week" },
-        { label: `Month - ${p.month}K`, value: "month" }
+        { label: `Week - ${p.week}`, value: "week" },
+        { label: `Month - ${p.month}`, value: "month" }
       ])
   );
 }
@@ -237,7 +237,7 @@ client.on("interactionCreate", async interaction => {
     const links = {
       flu: "https://www.mediafire.com/file/z1lnm953slckxl0/FF.ipa",
       migul: "https://www.mediafire.com/file/xxx",
-      sonic: "https://www.mediafire.com/file/yyy"
+      sonic: "https://www.mediafire.com/file/69ym6nmiye9cuwd/Free_Fire_1.120.1_1773767109.ipa/file"
     };
 
     if (interaction.values[0] === "proxy") {
@@ -283,7 +283,7 @@ client.on("interactionCreate", async interaction => {
           .addFields(
             { name: "🧾 Mã đơn", value: orderId },
             { name: "📦 Gói", value: `${type} (${time})` },
-            { name: "💰 Giá", value: `${price}K` }
+            { name: "💰 Giá", value: `${price}` }
           )
       ],
       components: [
@@ -304,7 +304,7 @@ client.on("interactionCreate", async interaction => {
         { name: "🧾 Mã đơn", value: order.orderId },
         { name: "👤 Người mua", value: `<@${interaction.user.id}>` },
         { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
-        { name: "💰 Giá", value: `${order.price}K` }
+        { name: "💰 Giá", value: `${order.price}` }
       );
 
     const row = new ActionRowBuilder().addComponents(
@@ -317,6 +317,7 @@ client.on("interactionCreate", async interaction => {
     return interaction.reply({ content: "🧾 Đã gửi admin!", ephemeral: true });
   }
 
+  // ===== APPROVE =====
   if (interaction.customId.startsWith("approve_")) {
     const userId = interaction.customId.split("_")[1];
 
@@ -343,38 +344,59 @@ client.on("interactionCreate", async interaction => {
 
     const user = await client.users.fetch(userId);
 
-    const embed = new EmbedBuilder()
+    const embedUser = new EmbedBuilder()
       .setTitle("🧾 Hoá đơn")
       .setColor("Green")
       .addFields(
         { name: "🧾 Mã đơn", value: order.orderId },
         { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
-        { name: "💰 Giá tiền", value: `${order.price}K` },
-        { name: "⏳ Thời gian", value: expire },
+        { name: "💰 Giá tiền", value: `${order.price}` },
+        { name: "⏳ Hết hạn", value: expire },
         { name: "🔑 Key", value: `\`${key}\`` }
       );
 
-    await user.send({ embeds: [embed] });
+    await user.send({ embeds: [embedUser] });
 
-    return interaction.reply({ content: "✅ Đã gửi!", ephemeral: true });
+    // UPDATE ADMIN EMBED
+    const updatedEmbed = EmbedBuilder.from(interaction.message.embeds[0])
+      .setColor("Green")
+      .addFields({ name: "✅ Trạng thái", value: "Đã duyệt" });
+
+    await interaction.message.edit({
+      embeds: [updatedEmbed],
+      components: []
+    });
+
+    return interaction.reply({ content: "✅ Đã duyệt!", ephemeral: true });
   }
 
+  // ===== REJECT =====
   if (interaction.customId.startsWith("reject_")) {
     const userId = interaction.customId.split("_")[1];
     const order = orders.get(userId);
     const user = await client.users.fetch(userId);
 
-    const embed = new EmbedBuilder()
+    const embedUser = new EmbedBuilder()
       .setTitle("🧾 Hoá đơn")
       .setColor("Red")
       .addFields(
         { name: "🧾 Mã đơn", value: order.orderId },
         { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
-        { name: "💰 Giá tiền", value: `${order.price}K` },
+        { name: "💰 Giá tiền", value: `${order.price}` },
         { name: "🔑 Key", value: "💳 Bank để nhận key" }
       );
 
-    await user.send({ embeds: [embed] });
+    await user.send({ embeds: [embedUser] });
+
+    // UPDATE ADMIN EMBED
+    const updatedEmbed = EmbedBuilder.from(interaction.message.embeds[0])
+      .setColor("Red")
+      .addFields({ name: "❌ Trạng thái", value: "Đã từ chối" });
+
+    await interaction.message.edit({
+      embeds: [updatedEmbed],
+      components: []
+    });
 
     return interaction.reply({ content: "❌ Đã từ chối!", ephemeral: true });
   }
