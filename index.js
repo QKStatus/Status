@@ -1,3 +1,4 @@
+index.js
 require("dotenv").config();
 
 const {
@@ -16,11 +17,9 @@ const fs = require("fs");
 // ===== ENV =====
 const TOKEN = process.env.TOKEN;
 const CHANNEL_ID = process.env.CHANNEL_ID;
-
-if (!TOKEN || !CHANNEL_ID) {
-  console.log("❌ Thiếu TOKEN hoặc CHANNEL_ID trong .env");
-  process.exit(0);
-}
+const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID;
+const BANK_ACC = process.env.BANK_ACC;
+const BANK_NAME = process.env.BANK_NAME || "MB";
 
 // ===== BOT =====
 const client = new Client({
@@ -36,28 +35,24 @@ function saveData(data) {
   fs.writeFileSync("./data.json", JSON.stringify(data, null, 2));
 }
 
+// ===== ORDER TEMP =====
+const orders = new Map();
+
 // ===== EMBED =====
 function createEmbed(data) {
   const embed = new EmbedBuilder()
     .setTitle("📢 Thông Báo Update Hack")
-    .setColor(0x00AEFF)
-    .setTimestamp();
+    .setColor(0x00AEFF);
 
-  const tools = [
-    { name: "Fluorite", emoji: "💎" },
-    { name: "Migul VN", emoji: "🔥" },
-    { name: "Sonic", emoji: "⚡" },
-    { name: "Proxy Aim", emoji: "🎯" }
-  ];
+  const tools = ["Fluorite", "Migul VN", "Sonic", "Proxy Aim"];
 
   tools.forEach(t => {
-    let status = data[t.name];
+    let status = data[t];
     let icon = status === "safe" ? "🟢" : "🔴";
-    let text = status === "safe" ? "Safe" : "Update";
 
     embed.addFields({
-      name: `${t.emoji} ${t.name}`,
-      value: `Status: ${icon} ${text}`,
+      name: t,
+      value: `${icon} ${status.toUpperCase()}`,
       inline: false
     });
   });
@@ -71,40 +66,28 @@ function createButtons() {
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("edit_status")
-        .setLabel("⚙️ Trạng Thái")
-        .setStyle(ButtonStyle.Primary)
-    ),
+        .setLabel("⚙️ Status")
+        .setStyle(ButtonStyle.Primary),
 
-    new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId("download_fluorite")
-        .setLabel("💎 Fluorite")
+        .setCustomId("download_menu")
+        .setLabel("📥 Link Tải")
         .setStyle(ButtonStyle.Secondary),
 
       new ButtonBuilder()
-        .setCustomId("download_migul")
-        .setLabel("🔥 Migul VN")
-        .setStyle(ButtonStyle.Secondary),
-
-      new ButtonBuilder()
-        .setCustomId("download_sonic")
-        .setLabel("⚡ Sonic")
-        .setStyle(ButtonStyle.Secondary),
-
-      new ButtonBuilder()
-        .setCustomId("download_proxy")
-        .setLabel("🎯 Proxy Aim")
-        .setStyle(ButtonStyle.Secondary)
+        .setCustomId("buy_proxy")
+        .setLabel("💰 Buy Proxy")
+        .setStyle(ButtonStyle.Success)
     )
   ];
 }
 
 // ===== MENU =====
-function toolMenu() {
+function downloadMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
-      .setCustomId("select_tool")
-      .setPlaceholder("Chọn tool")
+      .setCustomId("select_download")
+      .setPlaceholder("Chọn Hack")
       .addOptions([
         { label: "Fluorite", value: "Fluorite" },
         { label: "Migul VN", value: "Migul VN" },
@@ -114,47 +97,57 @@ function toolMenu() {
   );
 }
 
-function statusMenu(tool) {
+function proxyMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
-      .setCustomId(`set_${tool}`)
-      .setPlaceholder(`Chọn trạng thái cho ${tool}`)
+      .setCustomId("proxy_type")
+      .setPlaceholder("Chọn loại proxy")
       .addOptions([
-        { label: "🟢 Safe", value: "safe" },
-        { label: "🔴 Update", value: "update" }
+        { label: "Drag Anten", value: "drag_anten" },
+        { label: "Drag NoAnten", value: "drag_noanten" },
+        { label: "Body NoAnten", value: "body_noanten" }
       ])
   );
 }
 
+function timeMenu(type) {
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId(`time_${type}`)
+      .setPlaceholder("Chọn gói")
+      .addOptions([
+        { label: "Week", value: "week" },
+        { label: "Month", value: "month" }
+      ])
+  );
+}
+
+// ===== PRICE =====
+const prices = {
+  drag_anten: { week: 100, month: 200 },
+  drag_noanten: { week: 125, month: 225 },
+  body_noanten: { week: 80, month: 170 }
+};
+
+// ===== QR =====
+function createQR(amount, userId) {
+  return `https://img.vietqr.io/image/${BANK_NAME}-${BANK_ACC}-compact.png?amount=${amount}&addInfo=USER${userId}`;
+}
+
 // ===== READY =====
 client.once("ready", async () => {
-  console.log(`✅ Bot online: ${client.user.tag}`);
+  console.log(`✅ ${client.user.tag}`);
 
   const data = loadData();
   const channel = await client.channels.fetch(CHANNEL_ID);
 
-  let message = null;
+  const msg = await channel.send({
+    embeds: [createEmbed(data)],
+    components: createButtons()
+  });
 
-  if (data.messageId) {
-    try {
-      message = await channel.messages.fetch(data.messageId);
-    } catch {}
-  }
-
-  if (!message) {
-    message = await channel.send({
-      embeds: [createEmbed(data)],
-      components: createButtons()
-    });
-
-    data.messageId = message.id;
-    saveData(data);
-  } else {
-    await message.edit({
-      embeds: [createEmbed(data)],
-      components: createButtons()
-    });
-  }
+  data.messageId = msg.id;
+  saveData(data);
 });
 
 // ===== INTERACTION =====
@@ -163,93 +156,112 @@ client.on("interactionCreate", async interaction => {
 
   const data = loadData();
 
-  // ===== BUTTON =====
-  if (interaction.isButton()) {
+  // ===== DOWNLOAD BUTTON =====
+  if (interaction.customId === "download_menu") {
+    return interaction.reply({
+      content: "Chọn tool:",
+      components: [downloadMenu()],
+      ephemeral: true
+    });
+  }
 
-    // ===== DOWNLOAD (AI CŨNG DÙNG) =====
-    if (interaction.customId.startsWith("download_")) {
-      let link = "";
-      let name = "";
+  // ===== BUY BUTTON =====
+  if (interaction.customId === "buy_proxy") {
+    return interaction.reply({
+      content: "Chọn loại:",
+      components: [proxyMenu()],
+      ephemeral: true
+    });
+  }
 
-      switch (interaction.customId) {
-        case "download_fluorite":
-          name = "Fluorite";
-          link = "https://www.mediafire.com/file/88zoe08gtgc9wfx/FF_1.120.1_1.7.1.ipa/file";
-          break;
+  // ===== DOWNLOAD SELECT =====
+  if (interaction.customId === "select_download") {
+    const tool = interaction.values[0];
 
-        case "download_migul":
-          name = "Migul VN";
-          link = "https://www.mediafire.com/file/7xjc7fqb7xybbys/Free_Fire_1.120.1_1774083029.ipa/file";
-          break;
+    const links = {
+      "Fluorite": "link1",
+      "Migul VN": "link2",
+      "Sonic": "link3",
+      "Proxy Aim": "❌ Mua để có link"
+    };
 
-        case "download_sonic":
-          name = "Sonic";
-          link = "https://www.mediafire.com/file/69ym6nmiye9cuwd/Free_Fire_1.120.1_1773767109.ipa/file";
-          break;
+    return interaction.reply({
+      content: `📥 ${tool}: ${links[tool]}`,
+      ephemeral: true
+    });
+  }
 
-        case "download_proxy":
-          name = "Proxy Aim";
-          link = "❌ Vui lòng mua để được cấp link tải";
-          break;
-      }
+  // ===== PROXY TYPE =====
+  if (interaction.customId === "proxy_type") {
+    const type = interaction.values[0];
 
+    return interaction.update({
+      content: "Chọn gói:",
+      components: [timeMenu(type)]
+    });
+  }
+
+  // ===== CHỌN GÓI =====
+  if (interaction.customId.startsWith("time_")) {
+    const type = interaction.customId.replace("time_", "");
+    const time = interaction.values[0];
+
+    const price = prices[type][time];
+    const qr = createQR(price, interaction.user.id);
+
+    orders.set(interaction.user.id, { type, time, price });
+
+    const confirmBtn = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("confirm_bank")
+        .setLabel("✅ Xác nhận bank")
+        .setStyle(ButtonStyle.Success)
+    );
+
+    return interaction.update({
+      content: `💳 Thanh toán:\n${qr}`,
+      components: [confirmBtn]
+    });
+  }
+
+  // ===== XÁC NHẬN BANK =====
+  if (interaction.customId === "confirm_bank") {
+    const order = orders.get(interaction.user.id);
+
+    if (!order) {
       return interaction.reply({
-        content: `📥 **${name}**:\n${link}`,
+        content: "❌ Không có đơn hàng",
         ephemeral: true
       });
     }
 
-    // ===== ADMIN =====
+    const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
+
+    const embed = new EmbedBuilder()
+      .setTitle("🧾 Hoá Đơn Mua Proxy")
+      .addFields(
+        { name: "Tên người mua", value: `<@${interaction.user.id}>` },
+        { name: "Vật phẩm mua", value: `${order.type} (${order.time})` },
+        { name: "Giá trị", value: `${order.price}K` },
+        { name: "Thời gian", value: `<t:${Math.floor(Date.now()/1000)}:F>` }
+      )
+      .setColor("Yellow");
+
+    await logChannel.send({ embeds: [embed] });
+
+    return interaction.reply({
+      content: "🧾 Hoá đơn của bạn đã được tạo vui lòng đợi admin xác nhận và duyệt",
+      ephemeral: true
+    });
+  }
+
+  // ===== ADMIN =====
+  if (interaction.customId === "edit_status") {
     if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
       return interaction.reply({ content: "❌ Không phải admin", ephemeral: true });
     }
-
-    if (interaction.customId === "edit_status") {
-      return interaction.reply({
-        content: "Chọn tool:",
-        components: [toolMenu()],
-        ephemeral: true
-      });
-    }
-  }
-
-  // ===== MENU =====
-  if (interaction.customId === "select_tool") {
-    const tool = interaction.values[0];
-
-    return interaction.update({
-      content: `Chọn trạng thái cho ${tool}:`,
-      components: [statusMenu(tool)]
-    });
-  }
-
-  if (interaction.customId.startsWith("set_")) {
-    const tool = interaction.customId.replace("set_", "");
-    const status = interaction.values[0];
-
-    data[tool] = status;
-    saveData(data);
-
-    const channel = await client.channels.fetch(CHANNEL_ID);
-    const message = await channel.messages.fetch(data.messageId);
-
-    await message.edit({
-      embeds: [createEmbed(data)],
-      components: createButtons()
-    });
-
-    return interaction.update({
-      content: `✅ ${tool} → ${status}`,
-      components: []
-    });
   }
 });
-
-// ===== ERROR =====
-process.on("unhandledRejection", console.error);
-process.on("uncaughtException", console.error);
 
 // ===== START =====
-client.login(TOKEN).catch(err => {
-  console.error("❌ Lỗi TOKEN:", err.message);
-});
+client.login(TOKEN);
