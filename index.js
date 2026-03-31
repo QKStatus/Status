@@ -39,7 +39,7 @@ function saveData(data) {
 // ===== EMBED =====
 function createEmbed(data) {
   const embed = new EmbedBuilder()
-    .setTitle("📢 Status Tools")
+    .setTitle("📢 Thông Báo Update Hack")
     .setColor(0x00AEFF)
     .setTimestamp();
 
@@ -71,7 +71,7 @@ function createButtons() {
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("edit_status")
-        .setLabel("⚙️ Edit Status")
+        .setLabel("⚙️ Trạng Thái")
         .setStyle(ButtonStyle.Primary)
     ),
 
