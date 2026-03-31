@@ -8,7 +8,10 @@ const {
   ButtonBuilder,
   ButtonStyle,
   StringSelectMenuBuilder,
-  PermissionsBitField
+  PermissionsBitField,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle
 } = require("discord.js");
 
 const fs = require("fs");
@@ -20,12 +23,10 @@ const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID;
 const BANK_ACC = process.env.BANK_ACC;
 const BANK_NAME = process.env.BANK_NAME || "MB";
 
-// ===== BOT =====
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
-// ===== DATA =====
 function loadData() {
   return JSON.parse(fs.readFileSync("./data.json"));
 }
@@ -34,26 +35,18 @@ function saveData(data) {
   fs.writeFileSync("./data.json", JSON.stringify(data, null, 2));
 }
 
-// ===== ORDER TEMP =====
+// ===== TEMP =====
 const orders = new Map();
 
-// ===== EMBED PANEL =====
+// ===== EMBED =====
 function createEmbed(data) {
   const embed = new EmbedBuilder()
     .setTitle("📢 Thông Báo Update Hack")
     .setColor(0x00AEFF);
 
-  const tools = ["Fluorite", "Migul VN", "Sonic", "Proxy Aim"];
-
-  tools.forEach(t => {
-    let status = data[t];
-    let icon = status === "safe" ? "🟢" : "🔴";
-
-    embed.addFields({
-      name: t,
-      value: `${icon} ${status.toUpperCase()}`,
-      inline: false
-    });
+  ["Fluorite", "Migul VN", "Sonic", "Proxy Aim"].forEach(t => {
+    const icon = data[t] === "safe" ? "🟢" : "🔴";
+    embed.addFields({ name: t, value: `${icon} ${data[t].toUpperCase()}` });
   });
 
   return embed;
@@ -63,35 +56,29 @@ function createEmbed(data) {
 function createButtons() {
   return [
     new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId("edit_status")
-        .setLabel("⚙️ Trạng Thái")
-        .setStyle(ButtonStyle.Primary),
-
-      new ButtonBuilder()
-        .setCustomId("download_menu")
-        .setLabel("📥 Tải Tool")
-        .setStyle(ButtonStyle.Secondary),
-
-      new ButtonBuilder()
-        .setCustomId("buy_proxy")
-        .setLabel("💰 Buy Proxy")
-        .setStyle(ButtonStyle.Success)
+      new ButtonBuilder().setCustomId("edit_status").setLabel("⚙️ Trạng Thái").setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId("download_menu").setLabel("📥 Tải Tool").setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId("buy_proxy").setLabel("💰 Buy Proxy").setStyle(ButtonStyle.Success)
     )
   ];
 }
 
 // ===== MENU =====
-function downloadMenu() {
+function toolMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
-      .setCustomId("select_download")
-      .setPlaceholder("Chọn tool")
+      .setCustomId("select_tool")
+      .addOptions(["Fluorite","Migul VN","Sonic","Proxy Aim"].map(t => ({label:t,value:t})))
+  );
+}
+
+function statusMenu(tool) {
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId(`set_${tool}`)
       .addOptions([
-        { label: "Fluorite", value: "Fluorite" },
-        { label: "Migul VN", value: "Migul VN" },
-        { label: "Sonic", value: "Sonic" },
-        { label: "Proxy Aim", value: "Proxy Aim" }
+        { label: "🟢 Safe", value: "safe" },
+        { label: "🔴 Update", value: "update" }
       ])
   );
 }
@@ -100,7 +87,6 @@ function proxyMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("proxy_type")
-      .setPlaceholder("Chọn loại proxy")
       .addOptions([
         { label: "🔥 Drag Anten", value: "drag_anten" },
         { label: "⚡ Drag NoAnten", value: "drag_noanten" },
@@ -116,15 +102,13 @@ const prices = {
 };
 
 function timeMenu(type) {
-  const price = prices[type];
-
+  const p = prices[type];
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId(`time_${type}`)
-      .setPlaceholder("Chọn gói")
       .addOptions([
-        { label: `🗓 Week - ${price.week}K`, value: "week" },
-        { label: `📆 Month - ${price.month}K`, value: "month" }
+        { label: `Week - ${p.week}K`, value: "week" },
+        { label: `Month - ${p.month}K`, value: "month" }
       ])
   );
 }
@@ -136,9 +120,7 @@ function createQR(amount, userId, type, time) {
     drag_noanten: "Drag NoAnten",
     body_noanten: "Body NoAnten"
   };
-
-  const content = `BUY ${nameMap[type]} ${time.toUpperCase()} ID${userId}`;
-
+  const content = `BUY ${nameMap[type]} ${time} ID${userId}`;
   return `https://img.vietqr.io/image/${BANK_NAME}-${BANK_ACC}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(content)}`;
 }
 
@@ -147,9 +129,9 @@ client.once("ready", async () => {
   console.log(`✅ ${client.user.tag}`);
 
   const data = loadData();
-  const channel = await client.channels.fetch(CHANNEL_ID);
+  const ch = await client.channels.fetch(CHANNEL_ID);
 
-  const msg = await channel.send({
+  const msg = await ch.send({
     embeds: [createEmbed(data)],
     components: createButtons()
   });
@@ -160,118 +142,141 @@ client.once("ready", async () => {
 
 // ===== INTERACTION =====
 client.on("interactionCreate", async interaction => {
-  if (!interaction.isButton() && !interaction.isStringSelectMenu()) return;
+  if (!interaction.isButton() && !interaction.isStringSelectMenu() && !interaction.isModalSubmit()) return;
 
   const data = loadData();
 
-  // ===== DOWNLOAD =====
-  if (interaction.customId === "download_menu") {
-    return interaction.reply({
-      content: "Chọn tool:",
-      components: [downloadMenu()],
-      ephemeral: true
+  // ===== STATUS =====
+  if (interaction.customId === "edit_status") {
+    if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator))
+      return interaction.reply({ content: "❌ Không phải admin", ephemeral: true });
+
+    return interaction.reply({ content: "Chọn tool:", components: [toolMenu()], ephemeral: true });
+  }
+
+  if (interaction.customId === "select_tool") {
+    return interaction.update({
+      content: "Chọn trạng thái:",
+      components: [statusMenu(interaction.values[0])]
     });
   }
 
-  if (interaction.customId === "select_download") {
-    const tool = interaction.values[0];
+  if (interaction.customId.startsWith("set_")) {
+    const tool = interaction.customId.replace("set_", "");
+    data[tool] = interaction.values[0];
+    saveData(data);
 
-    const links = {
-      "Fluorite": "https://www.mediafire.com/file/z1lnm953slckxl0/FF_1.120.1_1.8.1.ipa/file",
-      "Migul VN": "https://www.mediafire.com/file/7xjc7fqb7xybbys/Free_Fire_1.120.1_1774083029.ipa/file",
-      "Sonic": "https://www.mediafire.com/file/69ym6nmiye9cuwd/Free_Fire_1.120.1_1773767109.ipa/file",
-      "Proxy Aim": "❌ Mua để có link"
-    };
+    const ch = await client.channels.fetch(CHANNEL_ID);
+    const msg = await ch.messages.fetch(data.messageId);
 
-    return interaction.reply({
-      content: `📥 ${tool}: ${links[tool]}`,
-      ephemeral: true
-    });
+    await msg.edit({ embeds: [createEmbed(data)], components: createButtons() });
+
+    return interaction.update({ content: "✅ Đã cập nhật", components: [] });
   }
 
   // ===== BUY =====
   if (interaction.customId === "buy_proxy") {
-    return interaction.reply({
-      content: "Chọn loại:",
-      components: [proxyMenu()],
-      ephemeral: true
-    });
+    return interaction.reply({ content: "Chọn loại:", components: [proxyMenu()], ephemeral: true });
   }
 
   if (interaction.customId === "proxy_type") {
-    const type = interaction.values[0];
-
-    return interaction.update({
-      content: "Chọn gói:",
-      components: [timeMenu(type)]
-    });
+    return interaction.update({ content: "Chọn gói:", components: [timeMenu(interaction.values[0])] });
   }
 
-  // ===== CHỌN GÓI =====
   if (interaction.customId.startsWith("time_")) {
     const type = interaction.customId.replace("time_", "");
     const time = interaction.values[0];
-
     const price = prices[type][time];
-    const qr = createQR(price, interaction.user.id, type, time);
 
     orders.set(interaction.user.id, { type, time, price });
 
-    const confirmBtn = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId("confirm_bank")
-        .setLabel("✅ Xác nhận bank")
-        .setStyle(ButtonStyle.Success)
+    const qr = createQR(price, interaction.user.id, type, time);
+
+    const confirm = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId("confirm_bank").setLabel("✅ Xác nhận bank").setStyle(ButtonStyle.Success)
     );
 
     const embed = new EmbedBuilder()
-      .setTitle("💳 Thanh Toán Proxy")
-      .addFields(
-        { name: "👤 User", value: `<@${interaction.user.id}>` },
-        { name: "📦 Gói", value: `${type} (${time})` },
-        { name: "💰 Giá", value: `${price}K` }
-      )
+      .setTitle("💳 Thanh toán")
       .setImage(qr)
-      .setColor("Blue");
+      .addFields(
+        { name: "Gói", value: `${type} (${time})` },
+        { name: "Giá", value: `${price}K` }
+      );
 
-    return interaction.update({
-      embeds: [embed],
-      components: [confirmBtn],
-      content: ""
-    });
+    return interaction.update({ embeds: [embed], components: [confirm] });
   }
 
   // ===== CONFIRM =====
   if (interaction.customId === "confirm_bank") {
     const order = orders.get(interaction.user.id);
+    if (!order) return;
 
-    if (!order) {
-      return interaction.reply({
-        content: "❌ Không có đơn hàng",
-        ephemeral: true
-      });
-    }
+    const logCh = await client.channels.fetch(LOG_CHANNEL_ID);
 
-    const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`approve_${interaction.user.id}`).setLabel("✅ Duyệt").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`deny_${interaction.user.id}`).setLabel("❌ Từ chối").setStyle(ButtonStyle.Danger)
+    );
 
-    const embed = new EmbedBuilder()
-      .setTitle("🧾 Hoá Đơn Mua Proxy")
-      .addFields(
-        { name: "Tên người mua", value: `<@${interaction.user.id}>` },
-        { name: "Vật phẩm mua", value: `${order.type} (${order.time})` },
-        { name: "Giá trị", value: `${order.price}K` },
-        { name: "Thời gian", value: `<t:${Math.floor(Date.now()/1000)}:F>` }
-      )
-      .setColor("Yellow");
-
-    await logChannel.send({ embeds: [embed] });
-
-    return interaction.reply({
-      content: "🧾 Hoá đơn của bạn đã được tạo vui lòng đợi admin xác nhận và duyệt",
-      ephemeral: true
+    await logCh.send({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("🧾 Đơn hàng")
+          .addFields(
+            { name: "User", value: `<@${interaction.user.id}>` },
+            { name: "Gói", value: `${order.type} (${order.time})` },
+            { name: "Giá", value: `${order.price}K` }
+          )
+      ],
+      components: [row]
     });
+
+    return interaction.reply({ content: "🧾 Đã gửi chờ admin duyệt", ephemeral: true });
+  }
+
+  // ===== DUYỆT =====
+  if (interaction.customId.startsWith("approve_")) {
+    const userId = interaction.customId.split("_")[1];
+
+    const modal = new ModalBuilder()
+      .setCustomId(`key_${userId}`)
+      .setTitle("Nhập Key");
+
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId("key_input")
+          .setLabel("Nhập key")
+          .setStyle(TextInputStyle.Short)
+      )
+    );
+
+    return interaction.showModal(modal);
+  }
+
+  // ===== SUBMIT KEY =====
+  if (interaction.customId.startsWith("key_")) {
+    const userId = interaction.customId.split("_")[1];
+    const key = interaction.fields.getTextInputValue("key_input");
+
+    const user = await client.users.fetch(userId);
+
+    await user.send(`🔑 Key của bạn: **${key}**`);
+
+    return interaction.reply({ content: "✅ Đã gửi key", ephemeral: true });
+  }
+
+  // ===== TỪ CHỐI =====
+  if (interaction.customId.startsWith("deny_")) {
+    const userId = interaction.customId.split("_")[1];
+
+    const user = await client.users.fetch(userId);
+
+    await user.send("❌ Không có đâu cháu ơi");
+
+    return interaction.reply({ content: "❌ Đã từ chối", ephemeral: true });
   }
 });
 
-// ===== START =====
 client.login(TOKEN);
