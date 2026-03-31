@@ -37,7 +37,7 @@ function saveData(data) {
 // ===== ORDER TEMP =====
 const orders = new Map();
 
-// ===== EMBED =====
+// ===== EMBED PANEL =====
 function createEmbed(data) {
   const embed = new EmbedBuilder()
     .setTitle("📢 Thông Báo Update Hack")
@@ -65,12 +65,12 @@ function createButtons() {
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("edit_status")
-        .setLabel("⚙️ Status")
+        .setLabel("⚙️ Trạng Thái")
         .setStyle(ButtonStyle.Primary),
 
       new ButtonBuilder()
         .setCustomId("download_menu")
-        .setLabel("📥 Link Tải")
+        .setLabel("📥 Tải Tool")
         .setStyle(ButtonStyle.Secondary),
 
       new ButtonBuilder()
@@ -86,7 +86,7 @@ function downloadMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("select_download")
-      .setPlaceholder("Chọn Hack")
+      .setPlaceholder("Chọn tool")
       .addOptions([
         { label: "Fluorite", value: "Fluorite" },
         { label: "Migul VN", value: "Migul VN" },
@@ -102,35 +102,44 @@ function proxyMenu() {
       .setCustomId("proxy_type")
       .setPlaceholder("Chọn loại proxy")
       .addOptions([
-        { label: "Drag Anten", value: "drag_anten" },
-        { label: "Drag NoAnten", value: "drag_noanten" },
-        { label: "Body NoAnten", value: "body_noanten" }
+        { label: "🔥 Drag Anten", value: "drag_anten" },
+        { label: "⚡ Drag NoAnten", value: "drag_noanten" },
+        { label: "🎯 Body NoAnten", value: "body_noanten" }
       ])
   );
 }
 
-function timeMenu(type) {
-  return new ActionRowBuilder().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId(`time_${type}`)
-      .setPlaceholder("Chọn gói")
-      .addOptions([
-        { label: "Week", value: "week" },
-        { label: "Month", value: "month" }
-      ])
-  );
-}
-
-// ===== PRICE =====
 const prices = {
   drag_anten: { week: 100, month: 200 },
   drag_noanten: { week: 125, month: 225 },
   body_noanten: { week: 80, month: 170 }
 };
 
+function timeMenu(type) {
+  const price = prices[type];
+
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId(`time_${type}`)
+      .setPlaceholder("Chọn gói")
+      .addOptions([
+        { label: `🗓 Week - ${price.week}K`, value: "week" },
+        { label: `📆 Month - ${price.month}K`, value: "month" }
+      ])
+  );
+}
+
 // ===== QR =====
-function createQR(amount, userId) {
-  return `https://img.vietqr.io/image/${BANK_NAME}-${BANK_ACC}-compact.png?amount=${amount}&addInfo=USER${userId}`;
+function createQR(amount, userId, type, time) {
+  const nameMap = {
+    drag_anten: "Drag Anten",
+    drag_noanten: "Drag NoAnten",
+    body_noanten: "Body NoAnten"
+  };
+
+  const content = `BUY ${nameMap[type]} ${time.toUpperCase()} ID${userId}`;
+
+  return `https://img.vietqr.io/image/${BANK_NAME}-${BANK_ACC}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(content)}`;
 }
 
 // ===== READY =====
@@ -155,7 +164,7 @@ client.on("interactionCreate", async interaction => {
 
   const data = loadData();
 
-  // ===== DOWNLOAD BUTTON =====
+  // ===== DOWNLOAD =====
   if (interaction.customId === "download_menu") {
     return interaction.reply({
       content: "Chọn tool:",
@@ -164,23 +173,13 @@ client.on("interactionCreate", async interaction => {
     });
   }
 
-  // ===== BUY BUTTON =====
-  if (interaction.customId === "buy_proxy") {
-    return interaction.reply({
-      content: "Chọn loại:",
-      components: [proxyMenu()],
-      ephemeral: true
-    });
-  }
-
-  // ===== DOWNLOAD SELECT =====
   if (interaction.customId === "select_download") {
     const tool = interaction.values[0];
 
     const links = {
-      "Fluorite": "link1",
-      "Migul VN": "link2",
-      "Sonic": "link3",
+      "Fluorite": "https://www.mediafire.com/file/z1lnm953slckxl0/FF_1.120.1_1.8.1.ipa/file",
+      "Migul VN": "https://www.mediafire.com/file/7xjc7fqb7xybbys/Free_Fire_1.120.1_1774083029.ipa/file",
+      "Sonic": "https://www.mediafire.com/file/69ym6nmiye9cuwd/Free_Fire_1.120.1_1773767109.ipa/file",
       "Proxy Aim": "❌ Mua để có link"
     };
 
@@ -190,7 +189,15 @@ client.on("interactionCreate", async interaction => {
     });
   }
 
-  // ===== PROXY TYPE =====
+  // ===== BUY =====
+  if (interaction.customId === "buy_proxy") {
+    return interaction.reply({
+      content: "Chọn loại:",
+      components: [proxyMenu()],
+      ephemeral: true
+    });
+  }
+
   if (interaction.customId === "proxy_type") {
     const type = interaction.values[0];
 
@@ -206,7 +213,7 @@ client.on("interactionCreate", async interaction => {
     const time = interaction.values[0];
 
     const price = prices[type][time];
-    const qr = createQR(price, interaction.user.id);
+    const qr = createQR(price, interaction.user.id, type, time);
 
     orders.set(interaction.user.id, { type, time, price });
 
@@ -217,13 +224,24 @@ client.on("interactionCreate", async interaction => {
         .setStyle(ButtonStyle.Success)
     );
 
+    const embed = new EmbedBuilder()
+      .setTitle("💳 Thanh Toán Proxy")
+      .addFields(
+        { name: "👤 User", value: `<@${interaction.user.id}>` },
+        { name: "📦 Gói", value: `${type} (${time})` },
+        { name: "💰 Giá", value: `${price}K` }
+      )
+      .setImage(qr)
+      .setColor("Blue");
+
     return interaction.update({
-      content: `💳 Thanh toán:\n${qr}`,
-      components: [confirmBtn]
+      embeds: [embed],
+      components: [confirmBtn],
+      content: ""
     });
   }
 
-  // ===== XÁC NHẬN BANK =====
+  // ===== CONFIRM =====
   if (interaction.customId === "confirm_bank") {
     const order = orders.get(interaction.user.id);
 
@@ -252,13 +270,6 @@ client.on("interactionCreate", async interaction => {
       content: "🧾 Hoá đơn của bạn đã được tạo vui lòng đợi admin xác nhận và duyệt",
       ephemeral: true
     });
-  }
-
-  // ===== ADMIN =====
-  if (interaction.customId === "edit_status") {
-    if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-      return interaction.reply({ content: "❌ Không phải admin", ephemeral: true });
-    }
   }
 });
 
