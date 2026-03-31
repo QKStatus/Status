@@ -50,7 +50,11 @@ const orders = new Map();
 
 // ===== UTIL =====
 function generateOrderId() {
-  return "HD" + Math.floor(Math.random() * 1000000);
+  let id;
+  do {
+    id = "HD-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+  } while ([...orders.values()].some(o => o.orderId === id));
+  return id;
 }
 
 function getExpireDate(time) {
@@ -79,7 +83,7 @@ function createButtons() {
   return [
     new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId("edit_status").setLabel("⚙️ Trạng Thái").setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId("download_menu").setLabel("📥 Tải Tool").setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId("download_menu").setLabel("📥 Tải Hack").setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId("buy_proxy").setLabel("💰 Buy Proxy").setStyle(ButtonStyle.Success)
     )
   ];
@@ -157,7 +161,7 @@ function timeMenu(type) {
 
 // ===== QR =====
 function createQR(amount, userId, type, time, orderId) {
-  const content = `HD:${orderId} | ${type} ${time} | ID${userId}`;
+  const content = `${orderId} | ${type} ${time} | ID${userId}`;
   return `https://img.vietqr.io/image/${BANK_NAME}-${BANK_ACC}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(content)}`;
 }
 
@@ -297,6 +301,7 @@ client.on("interactionCreate", async interaction => {
     const embed = new EmbedBuilder()
       .setTitle("📩 Đơn hàng")
       .addFields(
+        { name: "🧾 Mã đơn", value: order.orderId },
         { name: "👤 Người mua", value: `<@${interaction.user.id}>` },
         { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
         { name: "💰 Giá", value: `${order.price}K` }
@@ -312,7 +317,6 @@ client.on("interactionCreate", async interaction => {
     return interaction.reply({ content: "🧾 Đã gửi admin!", ephemeral: true });
   }
 
-  // ===== APPROVE =====
   if (interaction.customId.startsWith("approve_")) {
     const userId = interaction.customId.split("_")[1];
 
@@ -343,6 +347,7 @@ client.on("interactionCreate", async interaction => {
       .setTitle("🧾 Hoá đơn")
       .setColor("Green")
       .addFields(
+        { name: "🧾 Mã đơn", value: order.orderId },
         { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
         { name: "💰 Giá tiền", value: `${order.price}K` },
         { name: "⏳ Thời gian", value: expire },
@@ -354,7 +359,6 @@ client.on("interactionCreate", async interaction => {
     return interaction.reply({ content: "✅ Đã gửi!", ephemeral: true });
   }
 
-  // ===== REJECT =====
   if (interaction.customId.startsWith("reject_")) {
     const userId = interaction.customId.split("_")[1];
     const order = orders.get(userId);
@@ -364,6 +368,7 @@ client.on("interactionCreate", async interaction => {
       .setTitle("🧾 Hoá đơn")
       .setColor("Red")
       .addFields(
+        { name: "🧾 Mã đơn", value: order.orderId },
         { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
         { name: "💰 Giá tiền", value: `${order.price}K` },
         { name: "🔑 Key", value: "💳 Bank để nhận key" }
