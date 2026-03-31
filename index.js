@@ -8,7 +8,6 @@ const {
   ButtonBuilder,
   ButtonStyle,
   StringSelectMenuBuilder,
-  PermissionsBitField,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle
@@ -24,7 +23,10 @@ const BANK_ACC = process.env.BANK_ACC;
 const BANK_NAME = process.env.BANK_NAME || "MB";
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages
+  ]
 });
 
 // ===== DATA =====
@@ -51,13 +53,6 @@ const orders = new Map();
 // ===== UTIL =====
 function generateOrderId() {
   return "HD" + Math.floor(Math.random() * 1000000);
-}
-
-function getExpireDate(time) {
-  const now = new Date();
-  if (time === "week") now.setDate(now.getDate() + 7);
-  if (time === "month") now.setMonth(now.getMonth() + 1);
-  return now.toLocaleString("vi-VN");
 }
 
 // ===== EMBED =====
@@ -146,11 +141,21 @@ client.once("ready", async () => {
 
   data.messageId = msg.id;
   saveData(data);
+
+  console.log("✅ Bot đã online");
 });
 
 // ===== INTERACTION =====
 client.on("interactionCreate", async interaction => {
   if (!interaction.isButton() && !interaction.isStringSelectMenu() && !interaction.isModalSubmit()) return;
+
+  // ===== STATUS =====
+  if (interaction.customId === "edit_status") {
+    return interaction.reply({
+      content: "⚙️ Chức năng đang cập nhật...",
+      ephemeral: true
+    });
+  }
 
   // ===== DOWNLOAD =====
   if (interaction.customId === "download_menu") {
@@ -176,7 +181,7 @@ client.on("interactionCreate", async interaction => {
     });
   }
 
-  // ===== BUY PROXY (FIX CHÍNH) =====
+  // ===== BUY =====
   if (interaction.customId === "buy_proxy") {
     return interaction.reply({
       content: "💰 Chọn loại proxy:",
@@ -225,8 +230,70 @@ client.on("interactionCreate", async interaction => {
     });
   }
 
+  // ===== SEND ADMIN =====
   if (interaction.customId === "confirm_bank") {
-    await interaction.reply({ content: "🧾 Đã gửi admin!", ephemeral: true });
+    const order = orders.get(interaction.user.id);
+    if (!order) return interaction.reply({ content: "❌ Không có đơn!", ephemeral: true });
+
+    const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
+
+    const embed = new EmbedBuilder()
+      .setTitle("📩 Đơn hàng mới")
+      .addFields(
+        { name: "👤 Người mua", value: `<@${interaction.user.id}>` },
+        { name: "📦 Gói", value: `${order.type} (${order.time})` },
+        { name: "💰 Giá", value: `${order.price}K` },
+        { name: "🧾 Mã đơn", value: order.orderId }
+      );
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`approve_${interaction.user.id}`).setLabel("✅ Duyệt").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`reject_${interaction.user.id}`).setLabel("❌ Từ chối").setStyle(ButtonStyle.Danger)
+    );
+
+    await logChannel.send({ embeds: [embed], components: [row] });
+
+    return interaction.reply({ content: "🧾 Đã gửi admin!", ephemeral: true });
+  }
+
+  // ===== APPROVE =====
+  if (interaction.customId.startsWith("approve_")) {
+    const userId = interaction.customId.split("_")[1];
+
+    const modal = new ModalBuilder()
+      .setCustomId(`sendkey_${userId}`)
+      .setTitle("Nhập key gửi khách");
+
+    const input = new TextInputBuilder()
+      .setCustomId("key")
+      .setLabel("Nhập key")
+      .setStyle(TextInputStyle.Short);
+
+    modal.addComponents(new ActionRowBuilder().addComponents(input));
+
+    return interaction.showModal(modal);
+  }
+
+  // ===== MODAL =====
+  if (interaction.customId.startsWith("sendkey_")) {
+    const userId = interaction.customId.split("_")[1];
+    const key = interaction.fields.getTextInputValue("key");
+
+    const user = await client.users.fetch(userId);
+
+    await user.send(`🔑 Key của bạn: ${key}`);
+
+    return interaction.reply({ content: "✅ Đã gửi key!", ephemeral: true });
+  }
+
+  // ===== REJECT =====
+  if (interaction.customId.startsWith("reject_")) {
+    const userId = interaction.customId.split("_")[1];
+    const user = await client.users.fetch(userId);
+
+    await user.send("Bỏ tiền ra đi sẽ có nhé em 😏");
+
+    return interaction.reply({ content: "❌ Đã từ chối!", ephemeral: true });
   }
 });
 
