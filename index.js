@@ -1,4 +1,3 @@
-index vip
 require("dotenv").config();
 
 const {
