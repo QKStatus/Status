@@ -1,4 +1,3 @@
-code index new
 require("dotenv").config();
 
 const {
