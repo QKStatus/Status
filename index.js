@@ -99,8 +99,7 @@ function statusToolMenu() {
         { label: "Fluorite", value: "Fluorite" },
         { label: "Migul VN", value: "Migul VN" },
         { label: "Sonic", value: "Sonic" },
-        { label: "Proxy Aim", value: "Proxy Aim" },
-        { label: "CheatiOS", value: "CheatiOS" }
+        { label: "Proxy Aim", value: "Proxy Aim" }
       ])
   );
 }
@@ -125,8 +124,7 @@ function downloadMenu() {
         { label: "Fluorite", value: "flu" },
         { label: "Migul VN", value: "migul" },
         { label: "Sonic", value: "sonic" },
-        { label: "Proxy", value: "proxy" },
-        { label: "CheatiOS", value: "cheatios" }
+        { label: "Proxy", value: "proxy" }
       ])
   );
 }
@@ -241,8 +239,7 @@ client.on("interactionCreate", async interaction => {
       flu: "https://www.mediafire.com/file/z1lnm953slckxl0/FF.ipa",
       migul: "https://www.mediafire.com/file/xxx",
       sonic: "https://www.mediafire.com/file/69ym6nmiye9cuwd/
-Free_Fire_1.120.1_1773767109.ipa/file",
-      cheatios: "https://www.mediafire.com/file/xxm"
+Free_Fire_1.120.1_1773767109.ipa/file"
     };
 
     if (interaction.values[0] === "proxy") {
