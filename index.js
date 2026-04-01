@@ -24,7 +24,7 @@ const BANK_ACC = process.env.BANK_ACC;
 const BANK_NAME = process.env.BANK_NAME || "MB";
 
 // 👉 DÁN LINK ẢNH Ở ĐÂY
-const THUMBNAIL = "https://i.imgur.com/your-image.png";
+const THUMBNAIL = "https://files.catbox.moe/wpeovp.webp";
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages]
