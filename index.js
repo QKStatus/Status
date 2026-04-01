@@ -64,7 +64,7 @@ function getExpireDate(time) {
 // ===== EMBED TRẠNG THÁI =====
 function createEmbed(data) {
   const embed = new EmbedBuilder()
-    .setTitle("🚀 TRẠNG THÁI TOOL HACK")
+    .setTitle("🚀 TRẠNG THÁI HACK")
     .setDescription("📢 Cập nhật mới nhất\n🟢 SAFE | 🔴 UPDATE\n")
     .setColor(0x00AEFF);
 
@@ -111,8 +111,8 @@ function statusValueMenu(tool) {
     new StringSelectMenuBuilder()
       .setCustomId(`status_value_${tool}`)
       .addOptions([
-        { label: "🟢 SAFE", value: "safe" },
-        { label: "🔴 UPDATE", value: "update" }
+        { label: "🟢 An Toàn", value: "safe" },
+        { label: "🔴 Cập Nhật", value: "update" }
       ])
   );
 }
@@ -155,8 +155,8 @@ function timeMenu(type) {
     new StringSelectMenuBuilder()
       .setCustomId(`time_${type}`)
       .addOptions([
-        { label: `Week - ${p.week}K`, value: "week" },
-        { label: `Month - ${p.month}K`, value: "month" }
+        { label: `Tuần - ${p.week}`, value: "week" },
+        { label: `Tháng - ${p.month}`, value: "month" }
       ])
   );
 }
@@ -188,7 +188,7 @@ client.on("interactionCreate", async interaction => {
   // ===== BUY PROXY (FIX) =====
   if (interaction.customId === "buy_proxy") {
     return interaction.reply({
-      content: "💰 Chọn loại proxy:",
+      content: "💰 Chọn proxy:",
       components: [proxyMenu()],
       ephemeral: true
     }).catch(() => {});
@@ -197,7 +197,7 @@ client.on("interactionCreate", async interaction => {
   if (interaction.customId === "proxy_type") {
     await interaction.deferUpdate().catch(() => {});
     return interaction.editReply({
-      content: "⏳ Chọn thời gian:",
+      content: "⏳ Chọn HSD:",
       components: [timeMenu(interaction.values[0])]
     });
   }
@@ -222,7 +222,7 @@ client.on("interactionCreate", async interaction => {
           .addFields(
             { name: "🧾 Mã đơn", value: orderId },
             { name: "📦 Gói", value: `${type} (${time})` },
-            { name: "💰 Giá", value: `${price}K` }
+            { name: "💰 Giá", value: `${price}` }
           )
       ],
       components: [
@@ -244,7 +244,7 @@ client.on("interactionCreate", async interaction => {
         { name: "🧾 Mã đơn", value: order.orderId },
         { name: "👤 Người mua", value: `<@${interaction.user.id}>` },
         { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
-        { name: "💰 Giá", value: `${order.price}K` }
+        { name: "💰 Giá", value: `${order.price}` }
       );
 
     const row = new ActionRowBuilder().addComponents(
@@ -285,13 +285,13 @@ client.on("interactionCreate", async interaction => {
     await user.send({
       embeds: [
         new EmbedBuilder()
-          .setTitle("🧾 Hoá đơn")
+          .setTitle("🔰 Đơn Hàng Của Bạn")
           .addFields(
             { name: "🧾 Mã đơn", value: order.orderId },
             { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
             { name: "💰 Giá", value: `${order.price}K` },
             { name: "⏳ Thời gian", value: expire },
-            { name: "🔑 Key", value: `\`\`\`\n${key}\n\`\`\`` }
+            { name: "🔑 Key", value: `${key}` }
           )
       ]
     });
@@ -300,16 +300,19 @@ client.on("interactionCreate", async interaction => {
     await interaction.message.edit({
       embeds: [
         new EmbedBuilder()
-          .setTitle("✅ Đã duyệt")
+          .setTitle("✅ Đã Duyệt Đơn Hàng")
           .addFields(
             { name: "🧾 Mã đơn", value: order.orderId },
+            { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` }
+            { name: "💰 Giá", value: `${order.price}K` },
+            { name: "⏳ Thời gian", value: expire },
             { name: "🔑 Key", value: key }
           )
       ],
       components: []
     });
 
-    return interaction.reply({ content: "Đã duyệt!", ephemeral: true });
+    return interaction.reply({ content: "Đã Duyệt Đơn Hàng", ephemeral: true });
   }
 
   // ===== TỪ CHỐI =====
@@ -323,18 +326,21 @@ client.on("interactionCreate", async interaction => {
         new EmbedBuilder()
           .setTitle("❌ Bị từ chối")
           .addFields(
-            { name: "🧾 Mã đơn", value: order.orderId },
-            { name: "🔑 Key", value: "Bank để nhận key" }
+             { name: "🧾 Mã đơn", value: order.orderId },
+            { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` }
+            { name: "💰 Giá", value: `${order.price}K` },
+            { name: "⏳ Thời gian", value: expire },
+            { name: "🔑 Key", value: "Bank đi rồi ah duyệt key cho }
           )
       ]
     });
 
     await interaction.message.edit({
-      embeds: [new EmbedBuilder().setTitle("❌ Đã từ chối")],
+      embeds: [new EmbedBuilder().setTitle("❌ Đã Huỷ Đơn Hàng")],
       components: []
     });
 
-    return interaction.reply({ content: "Đã từ chối!", ephemeral: true });
+    return interaction.reply({ content: "Đã Huỷ Đơn Hàng!", ephemeral: true });
   }
 });
 
