@@ -61,23 +61,24 @@ function getExpireDate(time) {
   return now.toLocaleString("vi-VN");
 }
 
-// ===== EMBED TRẠNG THÁI =====
+// ===== EMBED STATUS =====
 function createEmbed(data) {
   const embed = new EmbedBuilder()
-    .setTitle("🚀 TRẠNG THÁI HACK")
-    .setDescription("📢 Cập nhật mới nhất\n🟢 SAFE | 🔴 UPDATE\n")
+    .setTitle("📢 Thông Báo Update Hack")
     .setColor(0x00AEFF);
 
   const tools = ["Fluorite", "Migul VN", "Sonic", "Proxy Aim", "Cheat iOS"];
 
-  let desc = "";
   tools.forEach(t => {
     const status = data[t] || "safe";
     const icon = status === "safe" ? "🟢" : "🔴";
-    desc += `**${t}** : ${icon} ${status.toUpperCase()}\n`;
+
+    embed.addFields({
+      name: `${t} : ${icon} ${status.toUpperCase()}`,
+      value: "‎"
+    });
   });
 
-  embed.setDescription(embed.data.description + "\n" + desc);
   return embed;
 }
 
@@ -90,81 +91,6 @@ function createButtons() {
       new ButtonBuilder().setCustomId("buy_proxy").setLabel("💰 Buy Proxy").setStyle(ButtonStyle.Success)
     )
   ];
-}
-
-function statusToolMenu() {
-  return new ActionRowBuilder().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId("status_tool")
-      .addOptions([
-        { label: "Fluorite", value: "Fluorite" },
-        { label: "Migul VN", value: "Migul VN" },
-        { label: "Sonic", value: "Sonic" },
-        { label: "Proxy Aim", value: "Proxy Aim" },
-        { label: "Cheat iOS", value: "Cheat iOS" }
-      ])
-  );
-}
-
-function statusValueMenu(tool) {
-  return new ActionRowBuilder().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId(`status_value_${tool}`)
-      .addOptions([
-        { label: "🟢 An Toàn", value: "safe" },
-        { label: "🔴 Cập Nhật", value: "update" }
-      ])
-  );
-}
-
-function downloadMenu() {
-  return new ActionRowBuilder().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId("download_select")
-      .addOptions([
-        { label: "Fluorite", value: "flu" },
-        { label: "Migul VN", value: "migul" },
-        { label: "Sonic", value: "sonic" },
-        { label: "Proxy", value: "proxy" },
-        { label: "Cheat iOS", value: "ios" }
-      ])
-  );
-}
-
-function proxyMenu() {
-  return new ActionRowBuilder().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId("proxy_type")
-      .addOptions([
-        { label: "🔥 Drag Anten", value: "Drag_Antena" },
-        { label: "⚡ Drag NoAnten", value: "Drag_NoAntena" },
-        { label: "🎯 Body NoAnten", value: "Body_NoAntena" }
-      ])
-  );
-}
-
-const prices = {
-  Drag_Antena: { week: 100000, month: 200000 },
-  Drag_NoAntena: { week: 125000, month: 225000 },
-  Body_NoAntena: { week: 80000, month: 170000 }
-};
-
-function timeMenu(type) {
-  const p = prices[type];
-  return new ActionRowBuilder().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId(`time_${type}`)
-      .addOptions([
-        { label: `Tuần - ${p.week}`, value: "week" },
-        { label: `Tháng - ${p.month}`, value: "month" }
-      ])
-  );
-}
-
-// ===== QR =====
-function createQR(amount, userId, type, time, orderId) {
-  const content = `${orderId} | ${type} ${time} | ID${userId}`;
-  return `https://img.vietqr.io/image/${BANK_NAME}-${BANK_ACC}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(content)}`;
 }
 
 // ===== READY =====
@@ -185,26 +111,23 @@ client.once("clientReady", async () => {
 client.on("interactionCreate", async interaction => {
   if (!interaction.isButton() && !interaction.isStringSelectMenu() && !interaction.isModalSubmit()) return;
 
-  // ===== BUY PROXY (FIX) =====
+  // ===== BUY PROXY =====
   if (interaction.customId === "buy_proxy") {
     return interaction.reply({
-      content: "💰 Chọn proxy:",
+      content: "💰 Chọn loại proxy:",
       components: [proxyMenu()],
       ephemeral: true
-    }).catch(() => {});
+    });
   }
 
   if (interaction.customId === "proxy_type") {
-    await interaction.deferUpdate().catch(() => {});
-    return interaction.editReply({
-      content: "⏳ Chọn HSD:",
+    return interaction.update({
+      content: "⏳ Chọn thời gian:",
       components: [timeMenu(interaction.values[0])]
     });
   }
 
   if (interaction.customId.startsWith("time_")) {
-    await interaction.deferUpdate().catch(() => {});
-
     const type = interaction.customId.replace("time_", "");
     const time = interaction.values[0];
     const price = prices[type][time];
@@ -212,17 +135,14 @@ client.on("interactionCreate", async interaction => {
     const orderId = generateOrderId();
     orders.set(interaction.user.id, { type, time, price, orderId });
 
-    const qr = createQR(price, interaction.user.id, type, time, orderId);
-
-    return interaction.editReply({
+    return interaction.update({
       embeds: [
         new EmbedBuilder()
           .setTitle("💳 Thanh toán")
-          .setImage(qr)
           .addFields(
             { name: "🧾 Mã đơn", value: orderId },
             { name: "📦 Gói", value: `${type} (${time})` },
-            { name: "💰 Giá", value: `${price}` }
+            { name: "💰 Giá", value: `${price}K` }
           )
       ],
       components: [
@@ -239,12 +159,12 @@ client.on("interactionCreate", async interaction => {
     const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
 
     const embed = new EmbedBuilder()
-      .setTitle("📦 Đơn hàng mới")
+      .setTitle("📦 Đơn hàng")
       .addFields(
         { name: "🧾 Mã đơn", value: order.orderId },
-        { name: "👤 Người mua", value: `<@${interaction.user.id}>` },
         { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
-        { name: "💰 Giá", value: `${order.price}` }
+        { name: "💰 Giá", value: `${order.price}K` },
+        { name: "📊 Trạng thái", value: "⏳ Chờ duyệt" }
       );
 
     const row = new ActionRowBuilder().addComponents(
@@ -253,6 +173,7 @@ client.on("interactionCreate", async interaction => {
     );
 
     await logChannel.send({ embeds: [embed], components: [row] });
+
     return interaction.reply({ content: "Đã gửi admin!", ephemeral: true });
   }
 
@@ -270,10 +191,10 @@ client.on("interactionCreate", async interaction => {
       .setStyle(TextInputStyle.Short);
 
     modal.addComponents(new ActionRowBuilder().addComponents(input));
+
     return interaction.showModal(modal);
   }
 
-  // ===== GỬI KEY + UPDATE EMBED =====
   if (interaction.customId.startsWith("sendkey_")) {
     const userId = interaction.customId.split("_")[1];
     const key = interaction.fields.getTextInputValue("key");
@@ -285,34 +206,32 @@ client.on("interactionCreate", async interaction => {
     await user.send({
       embeds: [
         new EmbedBuilder()
-          .setTitle("🔰 Đơn Hàng Của Bạn")
+          .setTitle("🧾 Hoá đơn")
           .addFields(
             { name: "🧾 Mã đơn", value: order.orderId },
             { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
             { name: "💰 Giá", value: `${order.price}K` },
             { name: "⏳ Thời gian", value: expire },
-            { name: "🔑 Key", value: `${key}` }
+            { name: "🔑 Key", value: `\`${key}\`` }
           )
       ]
     });
 
-    // update admin embed
     await interaction.message.edit({
       embeds: [
         new EmbedBuilder()
-          .setTitle("✅ Đã Duyệt Đơn Hàng")
+          .setTitle("📦 Đơn hàng")
           .addFields(
             { name: "🧾 Mã đơn", value: order.orderId },
-            { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` }
+            { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
             { name: "💰 Giá", value: `${order.price}K` },
-            { name: "⏳ Thời gian", value: expire },
-            { name: "🔑 Key", value: key }
+            { name: "📊 Trạng thái", value: "✅ Đã duyệt" }
           )
       ],
       components: []
     });
 
-    return interaction.reply({ content: "Đã Duyệt Đơn Hàng", ephemeral: true });
+    return interaction.reply({ content: "Đã duyệt!", ephemeral: true });
   }
 
   // ===== TỪ CHỐI =====
@@ -324,23 +243,31 @@ client.on("interactionCreate", async interaction => {
     await user.send({
       embeds: [
         new EmbedBuilder()
-          .setTitle("❌ Bị từ chối")
+          .setTitle("🧾 Hoá đơn")
           .addFields(
-             { name: "🧾 Mã đơn", value: order.orderId },
-            { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` }
+            { name: "🧾 Mã đơn", value: order.orderId },
+            { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
             { name: "💰 Giá", value: `${order.price}K` },
-            { name: "⏳ Thời gian", value: expire },
-            { name: "🔑 Key", value: "Bank đi rồi ah duyệt key cho }
+            { name: "🔑 Key", value: "`Bank để nhận key`" }
           )
       ]
     });
 
     await interaction.message.edit({
-      embeds: [new EmbedBuilder().setTitle("❌ Đã Huỷ Đơn Hàng")],
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("📦 Đơn hàng")
+          .addFields(
+            { name: "🧾 Mã đơn", value: order.orderId },
+            { name: "📦 Vật phẩm", value: `${order.type} (${order.time})` },
+            { name: "💰 Giá", value: `${order.price}K` },
+            { name: "📊 Trạng thái", value: "❌ Đã từ chối" }
+          )
+      ],
       components: []
     });
 
-    return interaction.reply({ content: "Đã Huỷ Đơn Hàng!", ephemeral: true });
+    return interaction.reply({ content: "Đã từ chối!", ephemeral: true });
   }
 });
 
