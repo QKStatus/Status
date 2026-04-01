@@ -23,7 +23,7 @@ const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID;
 const BANK_ACC = process.env.BANK_ACC;
 const BANK_NAME = process.env.BANK_NAME || "MB";
 
-// 👉 DÁN LINK ẢNH Ở ĐÂY
+// 👉 DÁN LINK ẢNH
 const THUMBNAIL = "https://files.catbox.moe/wpeovp.webp";
 
 const client = new Client({
@@ -63,23 +63,20 @@ function getExpireDate(time) {
   return now.toLocaleString("vi-VN");
 }
 
-// ===== EMBED STATUS (99% UI) =====
+// ===== EMBED STATUS =====
 function box(text) {
   return `\`\`\`diff\n${text}\n\`\`\``;
 }
 
 function createEmbed(data) {
   const status = (s) =>
-    s === "safe"
-      ? box("+ 🟢 SAFE")
-      : box("- 🔴 UPDATE");
+    s === "safe" ? box("+ 🟢 SAFE") : box("- 🔴 UPDATE");
 
   return new EmbedBuilder()
     .setColor("#00ffae")
     .setTitle("🚀 TRẠNG THÁI HACK FREE FIRE")
     .setThumbnail(THUMBNAIL)
     .setDescription("📡 Hệ thống theo dõi theo thời gian thực\n\u200B")
-
     .addFields(
       { name: "💎 FLUORITE", value: status(data["Fluorite"]) },
       { name: "🔥 MIGUL VN", value: status(data["Migul VN"]) },
@@ -90,10 +87,7 @@ function createEmbed(data) {
         value: "📢 Auto Update • Chính xác • Realtime"
       }
     )
-
-    .setFooter({
-      text: "⚡ Premium Bot System - By Khánh"
-    })
+    .setFooter({ text: "⚡ Premium Bot System - By Khánh" })
     .setTimestamp();
 }
 
@@ -308,6 +302,8 @@ client.on("interactionCreate", async interaction => {
 
   if (interaction.customId === "confirm_bank") {
     const order = orders.get(interaction.user.id);
+    if (!order) return interaction.reply({ content: "❌ Đơn không tồn tại!", ephemeral: true });
+
     const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
 
     const embed = new EmbedBuilder()
@@ -352,8 +348,9 @@ client.on("interactionCreate", async interaction => {
     const key = interaction.fields.getTextInputValue("key");
 
     const order = orders.get(userId);
-    const expire = getExpireDate(order.time);
+    if (!order) return interaction.reply({ content: "❌ Đơn không tồn tại!", ephemeral: true });
 
+    const expire = getExpireDate(order.time);
     const user = await client.users.fetch(userId);
 
     await user.send({
@@ -371,6 +368,17 @@ client.on("interactionCreate", async interaction => {
       ]
     });
 
+    const updatedEmbed = EmbedBuilder.from(interaction.message.embeds[0])
+      .setColor("Green")
+      .addFields({ name: "✅ Trạng thái", value: "Đã duyệt" });
+
+    await interaction.message.edit({
+      embeds: [updatedEmbed],
+      components: []
+    });
+
+    orders.delete(userId);
+
     return interaction.reply({ content: "✅ Đã duyệt!", ephemeral: true });
   }
 
@@ -378,6 +386,8 @@ client.on("interactionCreate", async interaction => {
   if (interaction.customId.startsWith("reject_")) {
     const userId = interaction.customId.split("_")[1];
     const order = orders.get(userId);
+    if (!order) return interaction.reply({ content: "❌ Đơn không tồn tại!", ephemeral: true });
+
     const user = await client.users.fetch(userId);
 
     await user.send({
@@ -393,6 +403,17 @@ client.on("interactionCreate", async interaction => {
           )
       ]
     });
+
+    const updatedEmbed = EmbedBuilder.from(interaction.message.embeds[0])
+      .setColor("Red")
+      .addFields({ name: "❌ Trạng thái", value: "Đã từ chối" });
+
+    await interaction.message.edit({
+      embeds: [updatedEmbed],
+      components: []
+    });
+
+    orders.delete(userId);
 
     return interaction.reply({ content: "❌ Đã từ chối!", ephemeral: true });
   }
