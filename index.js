@@ -99,6 +99,7 @@ function statusToolMenu() {
         { label: "Migul VN", value: "Migul VN" },
         { label: "Sonic", value: "Sonic" },
         { label: "Proxy Aim", value: "Proxy Aim" }
+        { label: "CheatiOS", value: "CheatiOS" },
       ])
   );
 }
@@ -108,8 +109,8 @@ function statusValueMenu(tool) {
     new StringSelectMenuBuilder()
       .setCustomId(`status_value_${tool}`)
       .addOptions([
-        { label: "🟢 SAFE", value: "safe" },
-        { label: "🔴 UPDATE", value: "update" }
+        { label: "🟢 An toàn", value: "safe" },
+        { label: "🔴 Đang cập nhật", value: "update" }
       ])
   );
 }
@@ -124,6 +125,7 @@ function downloadMenu() {
         { label: "Migul VN", value: "migul" },
         { label: "Sonic", value: "sonic" },
         { label: "Proxy", value: "proxy" }
+        { label: "CheatiOS", value: "cheatios" }
       ])
   );
 }
@@ -188,9 +190,9 @@ client.on("interactionCreate", async interaction => {
   // ===== STATUS ADMIN =====
   if (interaction.customId === "edit_status") {
     if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-      return interaction.reply({ content: "❌ Chỉ admin!", ephemeral: true });
+      return interaction.reply({ content: "❌ Chỉ admin mới có thể sửa!", ephemeral: true });
     }
-    return interaction.reply({ content: "⚙️ Chọn tool:", components: [statusToolMenu()], ephemeral: true });
+    return interaction.reply({ content: "⚙️ Chọn dạng:", components: [statusToolMenu()], ephemeral: true });
   }
 
   if (interaction.customId === "status_tool") {
@@ -237,11 +239,13 @@ client.on("interactionCreate", async interaction => {
     const links = {
       flu: "https://www.mediafire.com/file/z1lnm953slckxl0/FF.ipa",
       migul: "https://www.mediafire.com/file/xxx",
-      sonic: "https://www.mediafire.com/file/69ym6nmiye9cuwd/Free_Fire_1.120.1_1773767109.ipa/file"
+      sonic: "https://www.mediafire.com/file/69ym6nmiye9cuwd/
+Free_Fire_1.120.1_1773767109.ipa/file"
+      cheatios: "https://www.mediafire.com/file/xxm",
     };
 
     if (interaction.values[0] === "proxy") {
-      return interaction.editReply({ content: "🔒 Phải mua!", components: [] });
+      return interaction.editReply({ content: "🔒 Khi mua sẽ được cấp link!", components: [] });
     }
 
     return interaction.editReply({
@@ -258,7 +262,7 @@ client.on("interactionCreate", async interaction => {
   if (interaction.customId === "proxy_type") {
     await interaction.deferUpdate();
     return interaction.editReply({
-      content: "⏳ Chọn thời gian:",
+      content: "⏳ Chọn thời hạn:",
       components: [timeMenu(interaction.values[0])]
     });
   }
