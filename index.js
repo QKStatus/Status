@@ -77,7 +77,7 @@ function box(text) {
 
 function createEmbed(data) {
   const status = (s) =>
-    s === "safe" ? box("+ 🟢 SAFE") : box("- 🔴 UPDATE");
+    s === "safe" ? box("+ 🟢 An Toàn") : box("- 🔴 Cập Nhật");
 
   return new EmbedBuilder()
     .setColor("#00ffae")
@@ -127,8 +127,8 @@ function statusValueMenu(tool) {
     new StringSelectMenuBuilder()
       .setCustomId(`status_value_${tool}`)
       .addOptions([
-        { label: "🟢 SAFE", value: "safe" },
-        { label: "🔴 UPDATE", value: "update" }
+        { label: "🟢 An Toàn", value: "safe" },
+        { label: "🔴 Cập Nhật", value: "update" }
       ])
   );
 }
@@ -160,7 +160,7 @@ function proxyMenu() {
 
         { label: "💎 Fluorite", value: "Fluorite" },
         { label: "🔥 Migul VN", value: "Migul" },
-        { label: "🧠 ADR", value: "ADR" }
+        { label: "🧠 ADR Menu", value: "ADR" }
       ])
   );
 }
@@ -203,9 +203,15 @@ function timeMenu(type) {
   );
 }
 
-// ===== QR =====
+// ===== QR (FIXED) =====
 function createQR(amount, userId, type, time, orderId) {
-  const content = `${orderId} | ${type} ${time} | ID${userId}`;
+  if (!BANK_ACC || !BANK_NAME) {
+    console.log("❌ Thiếu BANK_ACC hoặc BANK_NAME");
+    return null;
+  }
+
+  const content = `${orderId} ${type} ${time} ID${userId}`;
+
   return `https://img.vietqr.io/image/${BANK_NAME}-${BANK_ACC}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(content)}`;
 }
 
@@ -274,7 +280,7 @@ client.on("interactionCreate", async interaction => {
     const links = {
       flu: "https://www.mediafire.com/file/z1lnm953slckxl0/FF.ipa",
       migul: "https://www.mediafire.com/file/xxx",
-      sonic: "https://www.mediafire.com/file/yyy",
+      sonic: "https://www.mediafire.com/file/69ym6nmiye9cuwd/Free_Fire_1.120.1_1773767109.ipa/file",
       adr: "https://www.mediafire.com/file/d2bni3dpcyx90dq/PingKiller.apk/file"
     };
 
@@ -338,10 +344,18 @@ client.on("interactionCreate", async interaction => {
 
     const qr = createQR(price, interaction.user.id, type, time, orderId);
 
+    if (!qr) {
+      return interaction.editReply({
+        content: "❌ Lỗi tạo QR! Kiểm tra BANK_ACC & BANK_NAME",
+        components: []
+      });
+    }
+
     return interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setTitle("💳 Thanh toán")
+          .setDescription(`📌 Nội dung CK: \`${orderId}\``)
           .setImage(qr)
           .addFields(
             { name: "🧾 Mã đơn", value: orderId },
@@ -379,7 +393,7 @@ client.on("interactionCreate", async interaction => {
 
     await logChannel.send({ embeds: [embed], components: [row] });
 
-    return interaction.reply({ content: "🧾 Đã gửi đơn hàng của bạn!", ephemeral: true });
+    return interaction.reply({ content: "🧾 Đã gửi đơn hàng của bạn . Hãy chắc chắn bạn đã bank tiền . Vì không có key Free đâu nhóc!", ephemeral: true });
   }
 
   // ===== APPROVE =====
@@ -439,7 +453,7 @@ client.on("interactionCreate", async interaction => {
     return interaction.reply({ content: "✅ Đã duyệt!", ephemeral: true });
   }
 
-  // REJECT
+  // ===== REJECT =====
   if (interaction.customId.startsWith("reject_")) {
     const userId = interaction.customId.split("_")[1];
     const order = orders.get(userId);
