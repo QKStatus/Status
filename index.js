@@ -89,7 +89,7 @@ function createEmbed(data) {
       { name: "🔥 MIGUL VN", value: status(data["Migul VN"]) },
       { name: "⚡ SONIC", value: status(data["Sonic"]) },
       { name: "🎯 PROXY AIM", value: status(data["Proxy Aim"]) },
-      { name: "🤖 ADR", value: status(data["ADR"]) },
+      { name: "🤖 ADR MENU", value: status(data["ADR"]) },
       { name: "━━━━━━━━━━━━━━━━━━", value: "📢 Auto Update • Chính xác • Realtime" }
     )
     .setFooter({ text: "⚡ Premium Bot System - By Khánh" })
@@ -417,7 +417,7 @@ client.on("interactionCreate", async interaction => {
           .setColor("Green")
           .addFields(
             { name: "🧾 Mã đơn", value: order.orderId },
-            { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
+            { name: "📦 Gói", value: `${order.type} (${order.time})` },
             { name: "💰 Giá", value: `${order.price}` },
             { name: "⏳ HSD", value: expire },
             { name: "🔑 Key", value: `\`${key}\`` }
@@ -425,14 +425,21 @@ client.on("interactionCreate", async interaction => {
       ]
     });
 
-    await interaction.message.edit({ components: [] });
+    const updatedEmbed = EmbedBuilder.from(interaction.message.embeds[0])
+      .setColor("Green")
+      .addFields({ name: "✅ Trạng thái", value: "Đã duyệt" });
+
+    await interaction.message.edit({
+      embeds: [updatedEmbed],
+      components: []
+    });
 
     orders.delete(userId);
 
     return interaction.reply({ content: "✅ Đã duyệt!", ephemeral: true });
   }
 
-  // ===== REJECT =====
+  // REJECT
   if (interaction.customId.startsWith("reject_")) {
     const userId = interaction.customId.split("_")[1];
     const order = orders.get(userId);
@@ -447,14 +454,21 @@ client.on("interactionCreate", async interaction => {
           .setColor("Red")
           .addFields(
             { name: "🧾 Mã đơn", value: order.orderId },
-            { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
+            { name: "📦 Gói", value: `${order.type} (${order.time})` },
             { name: "💰 Giá", value: `${order.price}` },
             { name: "🔑 Key", value: "💳 Bank để nhận key" }
           )
       ]
     });
 
-    await interaction.message.edit({ components: [] });
+    const updatedEmbed = EmbedBuilder.from(interaction.message.embeds[0])
+      .setColor("Red")
+      .addFields({ name: "❌ Trạng thái", value: "Đã từ chối" });
+
+    await interaction.message.edit({
+      embeds: [updatedEmbed],
+      components: []
+    });
 
     orders.delete(userId);
 
