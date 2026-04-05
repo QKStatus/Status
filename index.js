@@ -160,7 +160,8 @@ function proxyMenu() {
 
         { label: "💎 Fluorite", value: "Fluorite" },
         { label: "🔥 Migul VN", value: "Migul" },
-        { label: "🧠 ADR Menu", value: "ADR" }
+        { label: "🧠 ADR Menu", value: "ADR" },
+        { label: "⚡ Sonic", value: "Sonic" }
       ])
   );
 }
@@ -186,7 +187,9 @@ const prices = {
   Migul_Lite: { day: 50000, week: 150000, month: 350000 },
   Migul_Pro: { day: 90000, week: 225000, month: 450000 },
 
-  ADR: { week: 90000, month: 200000 }
+  ADR: { week: 90000, month: 200000 },
+
+  Sonic: { week: 90000, month: 200000 }
 };
 
 function timeMenu(type) {
