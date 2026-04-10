@@ -281,7 +281,7 @@ client.on("interactionCreate", async interaction => {
     await interaction.deferUpdate();
 
     const links = {
-      flu: "https://www.mediafire.com/file/z1lnm953slckxl0/FF.ipa",
+      flu: "https://www.mediafire.com/file/6lacl84tr167to2/ob53fix.ipa/file",
       migul: "https://www.mediafire.com/file/xxx",
       sonic: "https://www.mediafire.com/file/69ym6nmiye9cuwd/Free_Fire_1.120.1_1773767109.ipa/file",
       adr: "https://www.mediafire.com/file/d2bni3dpcyx90dq/PingKiller.apk/file"
