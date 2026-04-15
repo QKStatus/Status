@@ -89,7 +89,7 @@ function createEmbed(data) {
       { name: "🔥 MIGUL VN", value: status(data["Migul VN"]) },
       { name: "⚡ SONIC", value: status(data["Sonic"]) },
       { name: "🎯 PROXY AIM", value: status(data["Proxy Aim"]) },
-      { name: "🤖 ADR MENU", value: status(data["ADR"]) },
+      { name: "🤖 DRIP ADR", value: status(data["ADR"]) },
       { name: "━━━━━━━━━━━━━━━━━━", value: "📢 Auto Update • Chính xác • Realtime" }
     )
     .setFooter({ text: "⚡ Premium Bot System - By Khánh" })
@@ -160,7 +160,7 @@ function proxyMenu() {
 
         { label: "💎 Fluorite", value: "Fluorite" },
         { label: "🔥 Migul VN", value: "Migul" },
-        { label: "🧠 ADR Menu", value: "ADR" },
+        { label: "🧠 Drip ADR", value: "ADR" },
         { label: "⚡ Sonic", value: "Sonic" }
       ])
   );
@@ -284,7 +284,7 @@ client.on("interactionCreate", async interaction => {
       flu: "https://www.mediafire.com/file/mkynsj9th333783/FF_1.123.1_1.7.4.ipa/file",
       migul: "Chưa Update",
       sonic: "https://www.mediafire.com/file/69ym6nmiye9cuwd/Free_Fire_1.120.1_1773767109.ipa/file",
-      adr: "https://www.mediafire.com/file/d2bni3dpcyx90dq/PingKiller.apk/file"
+      adr: "https://www.mediafire.com/file/bie03xh4vag0edx/DRIPCLIENT_V1.3.TP.apks/file"
     };
 
     if (interaction.values[0] === "proxy") {
