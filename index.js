@@ -281,9 +281,9 @@ client.on("interactionCreate", async interaction => {
     await interaction.deferUpdate();
 
     const links = {
-      flu: "https://www.mediafire.com/file/mkynsj9th333783/FF_1.123.1_1.7.4.ipa/file",
+      flu: "https://www.mediafire.com/file/jwvk91kyhd1hdag/ob53_1.7.4.ipa/file",
       migul: "Chưa Update",
-      sonic: "https://www.mediafire.com/file/69ym6nmiye9cuwd/Free_Fire_1.120.1_1773767109.ipa/file",
+      sonic: "Chưa Update",
       adr: "https://www.mediafire.com/file/bie03xh4vag0edx/DRIPCLIENT_V1.3.TP.apks/file"
     };
 
@@ -396,7 +396,7 @@ client.on("interactionCreate", async interaction => {
 
     await logChannel.send({ embeds: [embed], components: [row] });
 
-    return interaction.reply({ content: "🧾 Đã gửi đơn hàng của bạn . Hãy chắc chắn bạn đã bank tiền . Vì không có key Free đâu nhóc!", ephemeral: true });
+    return interaction.reply({ content: "🧾 Đã gửi đơn hàng của bạn . Bot sẽ gửi key sau 2-3 phút , vui lòng ko spam duyệt", ephemeral: true });
   }
 
   // ===== APPROVE =====
