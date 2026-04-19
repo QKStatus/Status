@@ -161,7 +161,6 @@ function proxyMenu() {
         { label: "🔥 Drag Anten", value: "Drag_Antena" },
         { label: "⚡ Drag NoAnten", value: "Drag_NoAntena" },
         { label: "🎯 Body NoAnten", value: "Body_NoAntena" },
-
         { label: "💎 Fluorite", value: "Fluorite" },
         { label: "🔥 Migul VN", value: "Migul" },
         { label: "🧠 Drip ADR", value: "ADR" },
@@ -185,19 +184,15 @@ const prices = {
   Drag_Antena: { week: 100000, month: 200000 },
   Drag_NoAntena: { week: 125000, month: 225000 },
   Body_NoAntena: { week: 80000, month: 170000 },
-
   Fluorite: { day: 110000, week: 280000, month: 550000 },
-
   Migul_Lite: { day: 50000, week: 150000, month: 350000 },
   Migul_Pro: { day: 90000, week: 225000, month: 450000 },
-
   ADR: { week: 90000, month: 200000 },
   Sonic: { week: 90000, month: 200000 }
 };
 
 function timeMenu(type) {
   const p = prices[type];
-
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId(`time_${type}`)
@@ -223,7 +218,6 @@ client.once("ready", async () => {
   try {
     if (data.messageId) {
       const msg = await ch.messages.fetch(data.messageId);
-
       await msg.edit({
         embeds: [createEmbed(data)],
         components: createButtons()
@@ -233,7 +227,6 @@ client.once("ready", async () => {
         embeds: [createEmbed(data)],
         components: createButtons()
       });
-
       data.messageId = msg.id;
       saveData(data);
     }
@@ -242,7 +235,6 @@ client.once("ready", async () => {
       embeds: [createEmbed(data)],
       components: createButtons()
     });
-
     data.messageId = msg.id;
     saveData(data);
   }
@@ -304,7 +296,7 @@ client.on("interactionCreate", async interaction => {
     };
 
     if (interaction.values[0] === "proxy") {
-      return interaction.editReply({ content: "🔒 Mua để được cấp IP & Port!", components: [] });
+      return interaction.editReply({ content: "🔒 Mua để được cấp IP!", components: [] });
     }
 
     return interaction.editReply({
@@ -403,10 +395,7 @@ client.on("interactionCreate", async interaction => {
 
     await interaction.update({ components: [] });
 
-    return interaction.followUp({
-      content: "🧾 Đã gửi đơn hàng. Vui lòng chờ duyệt!",
-      ephemeral: true
-    });
+    return interaction.followUp({ content: "🧾 Đã gửi đơn!", ephemeral: true });
   }
 
   // ===== APPROVE =====
@@ -452,7 +441,15 @@ client.on("interactionCreate", async interaction => {
       ]
     });
 
-    await interaction.message.edit({ components: [] });
+    const oldEmbed = interaction.message.embeds[0];
+    const updatedEmbed = EmbedBuilder.from(oldEmbed)
+      .setColor("Green")
+      .setFields(
+        ...oldEmbed.fields.filter(f => !f.name.includes("Trạng thái")),
+        { name: "✅ Trạng thái", value: "Đã duyệt" }
+      );
+
+    await interaction.message.edit({ embeds: [updatedEmbed], components: [] });
 
     orders.delete(userId);
 
@@ -466,7 +463,15 @@ client.on("interactionCreate", async interaction => {
 
     await user.send("❌ Đơn của bạn đã bị từ chối!");
 
-    await interaction.message.edit({ components: [] });
+    const oldEmbed = interaction.message.embeds[0];
+    const updatedEmbed = EmbedBuilder.from(oldEmbed)
+      .setColor("Red")
+      .setFields(
+        ...oldEmbed.fields.filter(f => !f.name.includes("Trạng thái")),
+        { name: "❌ Trạng thái", value: "Đã từ chối" }
+      );
+
+    await interaction.message.edit({ embeds: [updatedEmbed], components: [] });
 
     orders.delete(userId);
 
