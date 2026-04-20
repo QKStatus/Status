@@ -54,18 +54,11 @@ function saveData(data) {
 
 // ===== TEMP =====
 const orders = new Map();
+const resetOrders = new Map();
 
 // ===== UTIL =====
 function generateOrderId() {
   return "HD-" + Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
-function getExpireDate(time) {
-  const now = new Date();
-  if (time === "day") now.setDate(now.getDate() + 1);
-  if (time === "week") now.setDate(now.getDate() + 7);
-  if (time === "month") now.setMonth(now.getMonth() + 1);
-  return now.toLocaleString("vi-VN");
 }
 
 function formatName(type) {
@@ -87,17 +80,13 @@ function createEmbed(data) {
     .setColor("#00ffae")
     .setTitle("🚀 TRẠNG THÁI HACK FREE FIRE")
     .setThumbnail(THUMBNAIL)
-    .setDescription("📡 Hệ thống theo dõi theo thời gian thực\n\u200B")
     .addFields(
       { name: "💎 FLUORITE", value: status(data["Fluorite"]) },
       { name: "🔥 MIGUL VN", value: status(data["Migul VN"]) },
       { name: "⚡ SONIC", value: status(data["Sonic"]) },
       { name: "🎯 PROXY AIM", value: status(data["Proxy Aim"]) },
-      { name: "🤖 DRIP ADR", value: status(data["ADR"]) },
-      { name: "━━━━━━━━━━━━━━━━━━", value: "📢 Auto Update • Chính xác • Realtime" }
-    )
-    .setFooter({ text: "⚡ Premium Bot System - By Khánh" })
-    .setTimestamp();
+      { name: "🤖 DRIP ADR", value: status(data["ADR"]) }
+    );
 }
 
 // ===== BUTTON =====
@@ -110,32 +99,6 @@ function createButtons() {
       new ButtonBuilder().setCustomId("reset_key").setLabel("♻️ Reset Key").setStyle(ButtonStyle.Danger)
     )
   ];
-}
-
-// ===== MENU =====
-function statusToolMenu() {
-  return new ActionRowBuilder().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId("status_tool")
-      .addOptions([
-        { label: "Fluorite", value: "Fluorite" },
-        { label: "Migul VN", value: "Migul VN" },
-        { label: "Sonic", value: "Sonic" },
-        { label: "Proxy Aim", value: "Proxy Aim" },
-        { label: "ADR", value: "ADR" }
-      ])
-  );
-}
-
-function statusValueMenu(tool) {
-  return new ActionRowBuilder().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId(`status_value_${tool}`)
-      .addOptions([
-        { label: "🟢 An Toàn", value: "safe" },
-        { label: "🔴 Cập Nhật", value: "update" }
-      ])
-  );
 }
 
 // ===== DOWNLOAD =====
@@ -173,11 +136,11 @@ function proxyVipMenu() {
     new StringSelectMenuBuilder()
       .setCustomId("proxy_vip_type")
       .addOptions([
-        { label: "🔥 Drag Anten", value: "Drag_Antena" },
-        { label: "⚡ Drag NoAnten", value: "Drag_NoAntena" },
-        { label: "🎯 Body NoAnten", value: "Body_NoAntena" },
-        { label: "🎯 AimBụng Antena", value: "AimBung_Antena" },
-        { label: "🎯 AimBụng No Antena", value: "AimBung_NoAntena" }
+        { label: "Drag Anten", value: "Drag_Antena" },
+        { label: "Drag NoAnten", value: "Drag_NoAntena" },
+        { label: "Body NoAnten", value: "Body_NoAntena" },
+        { label: "AimBụng Antena", value: "AimBung_Antena" },
+        { label: "AimBụng No Antena", value: "AimBung_NoAntena" }
       ])
   );
 }
@@ -199,9 +162,9 @@ const prices = {
   Body_NoAntena: { week: 80000, month: 170000 },
   AimBung_Antena: { week: 100000, month: 200000 },
   AimBung_NoAntena: { week: 100000, month: 200000 },
-  Fluorite: { day: 110000, week: 280000, month: 550000 },
-  Migul_Lite: { day: 50000, week: 150000, month: 350000 },
-  Migul_Pro: { day: 90000, week: 225000, month: 450000 },
+  Fluorite: { week: 280000, month: 550000 },
+  Migul_Lite: { week: 150000, month: 350000 },
+  Migul_Pro: { week: 225000, month: 450000 },
   ADR: { week: 90000, month: 200000 },
   Sonic: { week: 90000, month: 200000 }
 };
@@ -212,130 +175,163 @@ function timeMenu(type) {
     new StringSelectMenuBuilder()
       .setCustomId(`time_${type}`)
       .addOptions([
-        ...(p.day ? [{ label: `Ngày - ${p.day}`, value: "day" }] : []),
-        ...(p.week ? [{ label: `Tuần - ${p.week}`, value: "week" }] : []),
-        ...(p.month ? [{ label: `Tháng - ${p.month}`, value: "month" }] : [])
+        { label: `Tuần - ${p.week}`, value: "week" },
+        { label: `Tháng - ${p.month}`, value: "month" }
       ])
   );
 }
 
-// ===== QR =====
-function createQR(amount, userId, type, time, orderId) {
-  const content = `${orderId} ${type} ${time} ID${userId}`;
-  return `https://img.vietqr.io/image/${BANK_NAME}-${BANK_ACC}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(content)}`;
+// ===== RESET MENU =====
+function resetProductMenu() {
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId("reset_product")
+      .addOptions([
+        { label: "Fluorite", value: "Fluorite" },
+        { label: "Migul VN", value: "Migul" },
+        { label: "Sonic", value: "Sonic" },
+        { label: "Drip ADR", value: "ADR" },
+        { label: "Proxy Vip", value: "Proxy_Vip" }
+      ])
+  );
 }
 
-// ===== READY =====
-client.once("ready", async () => {
-  const data = loadData();
-  const ch = await client.channels.fetch(CHANNEL_ID);
+function resetProxyMenu() {
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId("reset_proxy")
+      .addOptions([
+        { label: "Drag Anten", value: "Drag_Antena" },
+        { label: "Drag NoAnten", value: "Drag_NoAntena" },
+        { label: "Body NoAnten", value: "Body_NoAntena" },
+        { label: "AimBụng Antena", value: "AimBung_Antena" },
+        { label: "AimBụng No Antena", value: "AimBung_NoAntena" }
+      ])
+  );
+}
 
-  let msg;
-  try {
-    if (data.messageId) {
-      msg = await ch.messages.fetch(data.messageId);
-      await msg.edit({ embeds: [createEmbed(data)], components: createButtons() });
-    } else {
-      msg = await ch.send({ embeds: [createEmbed(data)], components: createButtons() });
-      data.messageId = msg.id;
-      saveData(data);
-    }
-  } catch {
-    msg = await ch.send({ embeds: [createEmbed(data)], components: createButtons() });
-    data.messageId = msg.id;
-    saveData(data);
-  }
-
-  console.log("🤖 Bot online");
-});
+function resetTimeMenu(type) {
+  const p = prices[type];
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId(`reset_time_${type}`)
+      .addOptions([
+        { label: `Tuần - ${p.week}`, value: "week" },
+        { label: `Tháng - ${p.month}`, value: "month" }
+      ])
+  );
+}
 
 // ===== INTERACTION =====
 client.on("interactionCreate", async interaction => {
   if (!interaction.isButton() && !interaction.isStringSelectMenu() && !interaction.isModalSubmit()) return;
 
-  // ===== RESET KEY =====
+  // ===== RESET =====
   if (interaction.customId === "reset_key") {
+    return interaction.reply({ content: "Chọn sản phẩm:", components: [resetProductMenu()], ephemeral: true });
+  }
+
+  if (interaction.customId === "reset_product") {
+    const type = interaction.values[0];
+    resetOrders.set(interaction.user.id, { type });
+
+    if (type === "Proxy_Vip") {
+      return interaction.update({ content: "Chọn proxy:", components: [resetProxyMenu()] });
+    }
+
+    return interaction.update({ content: "Chọn thời gian:", components: [resetTimeMenu(type)] });
+  }
+
+  if (interaction.customId === "reset_proxy") {
+    const data = resetOrders.get(interaction.user.id);
+    data.type = interaction.values[0];
+    return interaction.update({ content: "Chọn thời gian:", components: [resetTimeMenu(data.type)] });
+  }
+
+  if (interaction.customId.startsWith("reset_time_")) {
+    const type = interaction.customId.replace("reset_time_", "");
+    const time = interaction.values[0];
+    const price = prices[type][time];
+    const orderId = generateOrderId();
+
+    resetOrders.set(interaction.user.id, { type, time, price, orderId });
+
     const modal = new ModalBuilder()
-      .setCustomId("resetkey_modal")
-      .setTitle("Reset Key");
+      .setCustomId("reset_modal")
+      .setTitle("Nhập key");
 
-    const input = new TextInputBuilder()
-      .setCustomId("old_key")
-      .setLabel("Nhập key cần reset")
-      .setStyle(TextInputStyle.Short);
-
-    modal.addComponents(new ActionRowBuilder().addComponents(input));
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder().setCustomId("key").setLabel("Key").setStyle(TextInputStyle.Short)
+      )
+    );
 
     return interaction.showModal(modal);
   }
 
-  if (interaction.customId === "resetkey_modal") {
-    const key = interaction.fields.getTextInputValue("old_key");
+  if (interaction.customId === "reset_modal") {
+    const data = resetOrders.get(interaction.user.id);
+    const key = interaction.fields.getTextInputValue("key");
 
     const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
 
     const embed = new EmbedBuilder()
-      .setTitle("♻️ Yêu cầu Reset Key")
+      .setTitle("Hoá đơn Reset")
+      .setColor("Yellow")
       .addFields(
-        { name: "👤 User", value: `<@${interaction.user.id}>` },
-        { name: "🔑 Key", value: `\`${key}\`` }
+        { name: "User", value: `<@${interaction.user.id}>` },
+        { name: "Gói", value: data.type },
+        { name: "Giá", value: `${data.price}` },
+        { name: "Key", value: key },
+        { name: "Trạng thái", value: "Chưa reset" }
       );
 
     const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`approve_reset_${interaction.user.id}`).setLabel("✅ Duyệt").setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId(`reject_reset_${interaction.user.id}`).setLabel("❌ Từ chối").setStyle(ButtonStyle.Danger)
+      new ButtonBuilder().setCustomId(`approve_reset_${interaction.user.id}`).setLabel("Duyệt").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`reject_reset_${interaction.user.id}`).setLabel("Từ chối").setStyle(ButtonStyle.Danger)
     );
 
     await logChannel.send({ embeds: [embed], components: [row] });
 
-    return interaction.reply({ content: "📩 Đã gửi yêu cầu!", ephemeral: true });
+    return interaction.reply({ content: "Đã gửi!", ephemeral: true });
   }
 
   if (interaction.customId.startsWith("approve_reset_")) {
     const userId = interaction.customId.split("_")[2];
     const user = await client.users.fetch(userId);
 
-    await user.send("✅ Key đã được reset!");
+    const old = interaction.message.embeds[0];
 
-    return interaction.update({ components: [] });
+    const updated = EmbedBuilder.from(old)
+      .setColor("Green")
+      .setFields(
+        ...old.fields.filter(f => f.name !== "Trạng thái"),
+        { name: "Trạng thái", value: "Đã reset" }
+      );
+
+    await interaction.message.edit({ embeds: [updated], components: [] });
+    await user.send({ embeds: [updated] });
+
+    return interaction.reply({ content: "Đã duyệt!", ephemeral: true });
   }
 
   if (interaction.customId.startsWith("reject_reset_")) {
     const userId = interaction.customId.split("_")[2];
     const user = await client.users.fetch(userId);
 
-    await user.send("❌ Reset bị từ chối!");
+    const old = interaction.message.embeds[0];
 
-    return interaction.update({ components: [] });
-  }
+    const updated = EmbedBuilder.from(old)
+      .setColor("Red")
+      .setFields(
+        ...old.fields.filter(f => f.name !== "Trạng thái"),
+        { name: "Trạng thái", value: "Chưa reset" }
+      );
 
-  // ===== BUY =====
-  if (interaction.customId === "buy_proxy") {
-    return interaction.reply({ content: "💰 Chọn loại:", components: [proxyMenu()], ephemeral: true });
-  }
+    await interaction.message.edit({ embeds: [updated], components: [] });
+    await user.send({ embeds: [updated] });
 
-  if (interaction.customId === "proxy_type") {
-    await interaction.deferUpdate();
-
-    if (interaction.values[0] === "Migul") {
-      return interaction.editReply({ content: "🔥 Chọn phiên bản:", components: [migulMenu()] });
-    }
-
-    if (interaction.values[0] === "Proxy_Vip") {
-      return interaction.editReply({ content: "🔥 Chọn loại Proxy:", components: [proxyVipMenu()] });
-    }
-
-    return interaction.editReply({ content: "⏳ Chọn thời gian:", components: [timeMenu(interaction.values[0])] });
-  }
-
-  if (interaction.customId === "proxy_vip_type") {
-    await interaction.deferUpdate();
-    return interaction.editReply({ content: "⏳ Chọn thời gian:", components: [timeMenu(interaction.values[0])] });
-  }
-
-  if (interaction.customId === "migul_type") {
-    await interaction.deferUpdate();
-    return interaction.editReply({ content: "⏳ Chọn HSD:", components: [timeMenu(interaction.values[0])] });
+    return interaction.reply({ content: "Đã từ chối!", ephemeral: true });
   }
 });
 
