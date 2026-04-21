@@ -164,6 +164,7 @@ function proxyMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("proxy_type")
+      .setPlaceholder("💰 Chọn sản phẩm")
       .addOptions([
         { label: "💎 Proxy Vip", value: "proxy_vip" },
         { label: "💎 Fluorite", value: "Fluorite" },
@@ -178,6 +179,7 @@ function proxyVipMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("proxy_vip_type")
+      .setPlaceholder("🔥 Chọn loại Proxy Vip")
       .addOptions([
         { label: "Drag Antena", value: "Drag_Antena" },
         { label: "Drag No Antena", value: "Drag_NoAntena" },
@@ -233,18 +235,34 @@ function createQR(amount, userId, type, time, orderId) {
   return `https://img.vietqr.io/image/${BANK_NAME}-${BANK_ACC}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(content)}`;
 }
 
-// ===== READY =====
+// ===== READY (FIX RESET) =====
 client.once("ready", async () => {
   const data = loadData();
   const ch = await client.channels.fetch(CHANNEL_ID);
 
-  const msg = await ch.send({
-    embeds: [createEmbed(data)],
-    components: createButtons()
-  });
-
-  data.messageId = msg.id;
-  saveData(data);
+  try {
+    if (data.messageId) {
+      const msg = await ch.messages.fetch(data.messageId);
+      await msg.edit({
+        embeds: [createEmbed(data)],
+        components: createButtons()
+      });
+    } else {
+      const msg = await ch.send({
+        embeds: [createEmbed(data)],
+        components: createButtons()
+      });
+      data.messageId = msg.id;
+      saveData(data);
+    }
+  } catch {
+    const msg = await ch.send({
+      embeds: [createEmbed(data)],
+      components: createButtons()
+    });
+    data.messageId = msg.id;
+    saveData(data);
+  }
 
   console.log("🤖 Bot online");
 });
@@ -253,43 +271,119 @@ client.once("ready", async () => {
 client.on("interactionCreate", async interaction => {
   if (!interaction.isButton() && !interaction.isStringSelectMenu() && !interaction.isModalSubmit()) return;
 
-  // BUY
+  // ===== ADMIN =====
+  if (interaction.customId === "edit_status") {
+    if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+      return interaction.reply({ content: "❌ Chỉ admin!", ephemeral: true });
+    }
+    return interaction.reply({ content: "⚙️ Chọn tool:", components: [statusToolMenu()], ephemeral: true });
+  }
+
+  if (interaction.customId === "status_tool") {
+    return interaction.update({
+      content: "🔧 Chọn trạng thái:",
+      components: [statusValueMenu(interaction.values[0])]
+    });
+  }
+
+  if (interaction.customId.startsWith("status_value_")) {
+    const tool = interaction.customId.replace("status_value_", "");
+    const value = interaction.values[0];
+
+    const data = loadData();
+    data[tool] = value;
+    saveData(data);
+
+    const channel = await client.channels.fetch(CHANNEL_ID);
+    const msg = await channel.messages.fetch(data.messageId);
+
+    await msg.edit({
+      embeds: [createEmbed(data)],
+      components: createButtons()
+    });
+
+    return interaction.update({ content: "✅ Updated!", components: [] });
+  }
+
+  // ===== DOWNLOAD =====
+  if (interaction.customId === "download_menu") {
+    return interaction.reply({ content: "📥 Chọn hack:", components: [downloadMenu()], ephemeral: true });
+  }
+
+  if (interaction.customId === "download_select") {
+    await interaction.deferUpdate();
+
+    const links = {
+      flu: "https://www.mediafire.com/file/jwvk91kyhd1hdag/ob53_1.7.4.ipa/file",
+      migul: "https://ipa.authtool.app/view/69e42db7e95f3e47a8152b8f",
+      sonic: "Chưa Update",
+      adr: "https://www.mediafire.com/file/bie03xh4vag0edx/DRIPCLIENT_V1.3.TP.apks/file"
+    };
+
+    if (interaction.values[0] === "proxy") {
+      return interaction.editReply({ content: "🔒 Mua để được cấp IP!", components: [] });
+    }
+
+    return interaction.editReply({
+      embeds: [new EmbedBuilder().setTitle("📥 Link tải").setDescription(links[interaction.values[0]])],
+      components: []
+    });
+  }
+
+  // ===== BUY =====
   if (interaction.customId === "buy_proxy") {
-    return interaction.reply({ content: "💰 Chọn sản phẩm:", components: [proxyMenu()], ephemeral: true });
+    return interaction.reply({ content: "💰 Chọn loại:", components: [proxyMenu()], ephemeral: true });
   }
 
   if (interaction.customId === "proxy_type") {
     await interaction.deferUpdate();
 
     if (interaction.values[0] === "proxy_vip") {
-      return interaction.editReply({ content: "🔥 Chọn Proxy Vip:", components: [proxyVipMenu()] });
+      return interaction.editReply({
+        content: "🔥 Chọn Proxy Vip:",
+        components: [proxyVipMenu()]
+      });
     }
 
     if (interaction.values[0] === "Migul") {
-      return interaction.editReply({ content: "🔥 Chọn phiên bản:", components: [migulMenu()] });
+      return interaction.editReply({
+        content: "🔥 Chọn phiên bản:",
+        components: [migulMenu()]
+      });
     }
 
-    return interaction.editReply({ content: "⏳ Chọn thời gian:", components: [timeMenu(interaction.values[0])] });
+    return interaction.editReply({
+      content: "⏳ Chọn thời gian:",
+      components: [timeMenu(interaction.values[0])]
+    });
   }
 
   if (interaction.customId === "proxy_vip_type") {
     await interaction.deferUpdate();
-    return interaction.editReply({ content: "⏳ Chọn thời gian:", components: [timeMenu(interaction.values[0])] });
+    return interaction.editReply({
+      content: "⏳ Chọn thời gian:",
+      components: [timeMenu(interaction.values[0])]
+    });
   }
 
   if (interaction.customId === "migul_type") {
     await interaction.deferUpdate();
-    return interaction.editReply({ content: "⏳ Chọn thời gian:", components: [timeMenu(interaction.values[0])] });
+    return interaction.editReply({
+      content: "⏳ Chọn thời gian:",
+      components: [timeMenu(interaction.values[0])]
+    });
   }
 
   if (interaction.customId.startsWith("time_")) {
     await interaction.deferUpdate();
 
-    orders.delete(interaction.user.id);
+    if (orders.has(interaction.user.id)) {
+      return interaction.editReply({ content: "⚠️ Bạn đang có đơn chưa xử lý!", components: [] });
+    }
 
     const type = interaction.customId.replace("time_", "");
     const time = interaction.values[0];
-    const price = prices[type][time];
+    const price = prices[type]?.[time];
 
     const orderId = generateOrderId();
     orders.set(interaction.user.id, { type, time, price, orderId });
@@ -299,8 +393,7 @@ client.on("interactionCreate", async interaction => {
     return interaction.editReply({
       embeds: [
         new EmbedBuilder()
-          .setColor("#22c55e")
-          .setTitle("💳 THANH TOÁN")
+          .setTitle("💳 Thanh toán")
           .setDescription(`📌 Nội dung CK: \`${orderId}\``)
           .setImage(qr)
           .addFields(
@@ -311,7 +404,7 @@ client.on("interactionCreate", async interaction => {
       ],
       components: [
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId("confirm_bank").setLabel("✅ Đã chuyển khoản").setStyle(ButtonStyle.Success)
+          new ButtonBuilder().setCustomId("confirm_bank").setLabel("✅ Xác nhận").setStyle(ButtonStyle.Success)
         )
       ]
     });
@@ -319,30 +412,107 @@ client.on("interactionCreate", async interaction => {
 
   if (interaction.customId === "confirm_bank") {
     const order = orders.get(interaction.user.id);
-    if (!order) return;
+    if (!order) return interaction.reply({ content: "❌ Đơn không tồn tại!", ephemeral: true });
 
     const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
 
-    await logChannel.send({
+    const embed = new EmbedBuilder()
+      .setTitle("📩 Đơn hàng")
+      .addFields(
+        { name: "🧾 Mã đơn", value: order.orderId },
+        { name: "👤 Người mua", value: `<@${interaction.user.id}>` },
+        { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
+        { name: "💰 Giá", value: `${order.price.toLocaleString()}đ` }
+      );
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`approve_${interaction.user.id}`).setLabel("✅ Duyệt").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`reject_${interaction.user.id}`).setLabel("❌ Từ chối").setStyle(ButtonStyle.Danger)
+    );
+
+    await logChannel.send({ embeds: [embed], components: [row] });
+
+    await interaction.update({ components: [] });
+
+    return interaction.followUp({ content: "🧾 Đã gửi đơn!", ephemeral: true });
+  }
+
+  // ===== APPROVE =====
+  if (interaction.customId.startsWith("approve_")) {
+    const userId = interaction.customId.split("_")[1];
+
+    const modal = new ModalBuilder()
+      .setCustomId(`sendkey_${userId}`)
+      .setTitle("Nhập key");
+
+    const input = new TextInputBuilder()
+      .setCustomId("key")
+      .setLabel("Key")
+      .setStyle(TextInputStyle.Short);
+
+    modal.addComponents(new ActionRowBuilder().addComponents(input));
+
+    return interaction.showModal(modal);
+  }
+
+  if (interaction.customId.startsWith("sendkey_")) {
+    const userId = interaction.customId.split("_")[1];
+    const key = interaction.fields.getTextInputValue("key");
+
+    const order = orders.get(userId);
+    if (!order) return interaction.reply({ content: "❌ Đơn không tồn tại!", ephemeral: true });
+
+    const expire = getExpireDate(order.time);
+    const user = await client.users.fetch(userId);
+
+    await user.send({
       embeds: [
         new EmbedBuilder()
-          .setTitle("📩 Đơn hàng")
+          .setTitle("🧾 Hoá đơn")
+          .setColor("Green")
           .addFields(
             { name: "🧾 Mã đơn", value: order.orderId },
-            { name: "👤 Người mua", value: `<@${interaction.user.id}>` },
             { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
-            { name: "💰 Giá", value: `${order.price.toLocaleString()}đ` }
+            { name: "💰 Giá", value: `${order.price.toLocaleString()}đ` },
+            { name: "⏳ HSD", value: expire },
+            { name: "🔑 Key", value: `\`${key}\`` }
           )
-      ],
-      components: [
-        new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId(`approve_${interaction.user.id}`).setLabel("Duyệt").setStyle(ButtonStyle.Success),
-          new ButtonBuilder().setCustomId(`reject_${interaction.user.id}`).setLabel("Từ chối").setStyle(ButtonStyle.Danger)
-        )
       ]
     });
 
-    return interaction.reply({ content: "🧾 Đã gửi đơn!", ephemeral: true });
+    const updatedEmbed = EmbedBuilder.from(interaction.message.embeds[0])
+      .setColor("Green")
+      .setFields(
+        ...interaction.message.embeds[0].fields.filter(f => !f.name.includes("Trạng thái")),
+        { name: "✅ Trạng thái", value: "Đã duyệt" }
+      );
+
+    await interaction.message.edit({ embeds: [updatedEmbed], components: [] });
+
+    orders.delete(userId);
+
+    return interaction.reply({ content: "✅ Đã duyệt!", ephemeral: true });
+  }
+
+  // ===== REJECT =====
+  if (interaction.customId.startsWith("reject_")) {
+    const userId = interaction.customId.split("_")[1];
+    const user = await client.users.fetch(userId);
+
+    await user.send("❌ Đơn của bạn đã bị từ chối!");
+
+    const updatedEmbed = EmbedBuilder.from(interaction.message.embeds[0])
+      .setColor("Red")
+      .setFields(
+        ...interaction.message.embeds[0].fields.filter(f => !f.name.includes("Trạng thái")),
+        { name: "❌ Trạng thái", value: "Đã từ chối" }
+      );
+
+    await interaction.message.edit({ embeds: [updatedEmbed], components: [] });
+
+    orders.delete(userId);
+
+    return interaction.reply({ content: "❌ Đã từ chối!", ephemeral: true });
   }
 });
 
