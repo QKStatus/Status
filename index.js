@@ -26,7 +26,11 @@ const BANK_NAME = process.env.BANK_NAME || "MB";
 const THUMBNAIL = "https://files.catbox.moe/wpeovp.webp";
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
 });
 
 // ===== DATA =====
@@ -58,6 +62,7 @@ function generateOrderId() {
 
 function getExpireDate(time) {
   const now = new Date();
+  if (time === "day") now.setDate(now.getDate() + 1);
   if (time === "week") now.setDate(now.getDate() + 7);
   if (time === "month") now.setMonth(now.getMonth() + 1);
   return now.toLocaleString("vi-VN");
@@ -65,44 +70,40 @@ function getExpireDate(time) {
 
 function formatName(type) {
   const map = {
-    Drag_Antena: "🔥 Drag Antena",
-    Drag_NoAntena: "⚡ Drag No Antena",
-    Body_NoAntena: "🎯 Body No Antena",
-    Bung_Antena: "💪 Bụng Antena",
-    Bung_NoAntena: "💪 Bụng No Antena",
-    Fluorite: "💎 Fluorite",
-    Migul_Lite: "🔥 Migul Lite",
-    Migul_Pro: "🔥 Migul Pro",
-    ADR: "🧠 Drip ADR",
-    Sonic: "⚡ Sonic"
+    Drag_Antena: "Drag Antena",
+    Drag_NoAntena: "Drag No Antena",
+    Body_NoAntena: "Body No Antena",
+    Bung_Antena: "Bụng Antena",
+    Bung_NoAntena: "Bụng No Antena",
+    Migul_Lite: "Migul VN (Lite)",
+    Migul_Pro: "Migul VN (Pro)"
   };
   return map[type] || type;
 }
 
-async function safeSend(user, data) {
-  try { await user.send(data); } catch {}
+// ===== EMBED =====
+function box(text) {
+  return `\`\`\`diff\n${text}\n\`\`\``;
 }
 
-// ===== EMBED UI XỊN =====
 function createEmbed(data) {
-  const s = (v) => (v === "safe" ? "🟢 Hoạt động" : "🔴 Update");
+  const status = (s) =>
+    s === "safe" ? box("+ 🟢 An Toàn") : box("- 🔴 Cập Nhật");
 
   return new EmbedBuilder()
-    .setColor("#060b26")
-    .setTitle("🚀 FREE FIRE PREMIUM SHOP")
+    .setColor("#00ffae")
+    .setTitle("🚀 TRẠNG THÁI HACK FREE FIRE")
     .setThumbnail(THUMBNAIL)
-    .setDescription(`
-📡 **Realtime System**
-━━━━━━━━━━━━━━━━━━
-💎 Fluorite: ${s(data["Fluorite"])}
-🔥 Migul VN: ${s(data["Migul VN"])}
-⚡ Sonic: ${s(data["Sonic"])}
-🎯 Proxy Aim: ${s(data["Proxy Aim"])}
-🤖 ADR: ${s(data["ADR"])}
-━━━━━━━━━━━━━━━━━━
-💡 **Chọn chức năng bên dưới**
-`)
-    .setFooter({ text: "⚡ Premium Bot • Auto • Realtime" })
+    .setDescription("📡 Hệ thống theo dõi theo thời gian thực\n\u200B")
+    .addFields(
+      { name: "💎 FLUORITE", value: status(data["Fluorite"]) },
+      { name: "🔥 MIGUL VN", value: status(data["Migul VN"]) },
+      { name: "⚡ SONIC", value: status(data["Sonic"]) },
+      { name: "🎯 PROXY AIM", value: status(data["Proxy Aim"]) },
+      { name: "🤖 DRIP ADR", value: status(data["ADR"]) },
+      { name: "━━━━━━━━━━━━━━━━━━", value: "📢 Auto Update • Chính xác • Realtime" }
+    )
+    .setFooter({ text: "⚡ Premium Bot System - By Khánh" })
     .setTimestamp();
 }
 
@@ -118,17 +119,57 @@ function createButtons() {
 }
 
 // ===== MENU =====
+function statusToolMenu() {
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId("status_tool")
+      .addOptions([
+        { label: "Fluorite", value: "Fluorite" },
+        { label: "Migul VN", value: "Migul VN" },
+        { label: "Sonic", value: "Sonic" },
+        { label: "Proxy Aim", value: "Proxy Aim" },
+        { label: "ADR", value: "ADR" }
+      ])
+  );
+}
+
+function statusValueMenu(tool) {
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId(`status_value_${tool}`)
+      .addOptions([
+        { label: "🟢 An Toàn", value: "safe" },
+        { label: "🔴 Cập Nhật", value: "update" }
+      ])
+  );
+}
+
+// ===== DOWNLOAD =====
+function downloadMenu() {
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId("download_select")
+      .addOptions([
+        { label: "Fluorite", value: "flu" },
+        { label: "Migul VN", value: "migul" },
+        { label: "Sonic", value: "sonic" },
+        { label: "Proxy", value: "proxy" },
+        { label: "ADR", value: "adr" }
+      ])
+  );
+}
+
+// ===== BUY =====
 function proxyMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("proxy_type")
-      .setPlaceholder("💰 Chọn sản phẩm")
       .addOptions([
-        { label: "Proxy Vip", description: "Full tính năng", value: "proxy_vip", emoji: "💎" },
-        { label: "Fluorite", value: "Fluorite" },
-        { label: "Migul VN", value: "Migul" },
-        { label: "ADR", value: "ADR" },
-        { label: "Sonic", value: "Sonic" }
+        { label: "💎 Proxy Vip", value: "proxy_vip" },
+        { label: "💎 Fluorite", value: "Fluorite" },
+        { label: "🔥 Migul VN", value: "Migul" },
+        { label: "🧠 Drip ADR", value: "ADR" },
+        { label: "⚡ Sonic", value: "Sonic" }
       ])
   );
 }
@@ -137,7 +178,6 @@ function proxyVipMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("proxy_vip_type")
-      .setPlaceholder("🔥 Chọn Proxy Vip")
       .addOptions([
         { label: "Drag Antena", value: "Drag_Antena" },
         { label: "Drag No Antena", value: "Drag_NoAntena" },
@@ -179,7 +219,6 @@ function timeMenu(type) {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId(`time_${type}`)
-      .setPlaceholder("⏳ Chọn thời gian")
       .addOptions([
         ...(p.day ? [{ label: `Ngày - ${p.day}`, value: "day" }] : []),
         ...(p.week ? [{ label: `Tuần - ${p.week}`, value: "week" }] : []),
