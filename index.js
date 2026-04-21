@@ -438,7 +438,7 @@ client.on("interactionCreate", async interaction => {
   }
 
   // ===== APPROVE =====
-  if (interaction.customId.startsWith("approve_")) {
+    if (interaction.customId.startsWith("approve_")) {
     const userId = interaction.customId.split("_")[1];
 
     const modal = new ModalBuilder()
@@ -480,10 +480,11 @@ client.on("interactionCreate", async interaction => {
       ]
     });
 
-    const updatedEmbed = EmbedBuilder.from(interaction.message.embeds[0])
+    const oldEmbed = interaction.message.embeds[0];
+    const updatedEmbed = EmbedBuilder.from(oldEmbed)
       .setColor("Green")
       .setFields(
-        ...interaction.message.embeds[0].fields.filter(f => !f.name.includes("Trạng thái")),
+        ...oldEmbed.fields.filter(f => !f.name.includes("Trạng thái")),
         { name: "✅ Trạng thái", value: "Đã duyệt" }
       );
 
@@ -501,10 +502,11 @@ client.on("interactionCreate", async interaction => {
 
     await user.send("❌ Đơn của bạn đã bị từ chối!");
 
-    const updatedEmbed = EmbedBuilder.from(interaction.message.embeds[0])
+    const oldEmbed = interaction.message.embeds[0];
+    const updatedEmbed = EmbedBuilder.from(oldEmbed)
       .setColor("Red")
       .setFields(
-        ...interaction.message.embeds[0].fields.filter(f => !f.name.includes("Trạng thái")),
+        ...oldEmbed.fields.filter(f => !f.name.includes("Trạng thái")),
         { name: "❌ Trạng thái", value: "Đã từ chối" }
       );
 
