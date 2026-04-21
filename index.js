@@ -205,7 +205,7 @@ function migulMenu() {
 const prices = {
   Drag_Antena: { week: 100000, month: 200000 },
   Drag_NoAntena: { week: 125000, month: 225000 },
-  Body_NoAntena: { week: 80000, month: 170000 },
+  Body_NoAntena: { week: 90000, month: 180000 },
   Bung_Antena: { week: 100000, month: 200000 },
   Bung_NoAntena: { week: 100000, month: 200000 },
 
