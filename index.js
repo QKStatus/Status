@@ -111,8 +111,8 @@ function createEmbed(data) {
 function createButtons() {
   return [
     new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId("download_menu").setLabel("📥 Link Tải").setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId("buy_proxy").setLabel("🛒 Buy Key").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId("download_menu").setLabel("📥 Link Tải").setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId("edit_status").setLabel("👑 ADMIN").setStyle(ButtonStyle.Primary)
     )
   ];
