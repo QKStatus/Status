@@ -41,7 +41,7 @@ function loadData() {
     return {
       Fluorite: "safe",
       "Migul VN": "safe",
-      Sonic: "safe",
+      Tipa Migul: "safe",
       "Proxy Aim": "safe",
       ADR: "safe"
     };
@@ -75,8 +75,8 @@ function formatName(type) {
     Body_NoAntena: "Body No Antena",
     Bung_Antena: "Bụng Antena",
     Bung_NoAntena: "Bụng No Antena",
-    Migul_Lite: "Migul VN (Lite)",
-    Migul_Pro: "Migul VN (Pro)"
+    Migul_Lite: "Migul VN [Lite]",
+    Migul_Pro: "Migul VN [Pro]"
   };
   return map[type] || type;
 }
@@ -111,9 +111,9 @@ function createEmbed(data) {
 function createButtons() {
   return [
     new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId("edit_status").setLabel("☃️ ADMIN").setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId("edit_status").setLabel("👑 ADMIN").setStyle(ButtonStyle.Primary),
       new ButtonBuilder().setCustomId("download_menu").setLabel("📥 Link Tải").setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId("buy_proxy").setLabel("💰 Buy Key").setStyle(ButtonStyle.Success)
+      new ButtonBuilder().setCustomId("buy_proxy").setLabel("🛒 Buy Key").setStyle(ButtonStyle.Success)
     )
   ];
 }
@@ -164,7 +164,7 @@ function proxyMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("proxy_type")
-      .setPlaceholder("💰 Chọn sản phẩm")
+      .setPlaceholder("🛒 Chọn Key")
       .addOptions([
         { label: "💎 Proxy Vip", value: "proxy_vip" },
         { label: "💎 Fluorite", value: "Fluorite" },
@@ -179,7 +179,7 @@ function proxyVipMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("proxy_vip_type")
-      .setPlaceholder("🔥 Chọn loại Proxy Vip")
+      .setPlaceholder("🔥 Chọn Proxy ")
       .addOptions([
         { label: "Drag Antena", value: "Drag_Antena" },
         { label: "Drag No Antena", value: "Drag_NoAntena" },
