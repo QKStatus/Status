@@ -98,7 +98,7 @@ function createEmbed(data) {
     .addFields(
       { name: "💎 FLUORITE", value: status(data["Fluorite"]) },
       { name: "🔥 MIGUL VN", value: status(data["Migul VN"]) },
-      { name: "⚡ SONIC", value: status(data["Sonic"]) },
+      { name: "⚡ TIPA MIGUL", value: status(data["Sonic"]) },
       { name: "🎯 PROXY AIM", value: status(data["Proxy Aim"]) },
       { name: "🤖 DRIP ADR", value: status(data["ADR"]) },
       { name: "━━━━━━━━━━━━━━━━━━", value: "📢 Auto Update • Chính xác • Realtime" }
@@ -111,8 +111,8 @@ function createEmbed(data) {
 function createButtons() {
   return [
     new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId("edit_status").setLabel("⚙️ Trạng Thái").setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId("download_menu").setLabel("📥 Tải Hack").setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId("edit_status").setLabel("☃️ ADMIN").setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId("download_menu").setLabel("📥 Link Tải").setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId("buy_proxy").setLabel("💰 Buy Key").setStyle(ButtonStyle.Success)
     )
   ];
@@ -126,7 +126,7 @@ function statusToolMenu() {
       .addOptions([
         { label: "Fluorite", value: "Fluorite" },
         { label: "Migul VN", value: "Migul VN" },
-        { label: "Sonic", value: "Sonic" },
+        { label: "Tipa Migul", value: "Tipa Migul" },
         { label: "Proxy Aim", value: "Proxy Aim" },
         { label: "ADR", value: "ADR" }
       ])
@@ -152,7 +152,7 @@ function downloadMenu() {
       .addOptions([
         { label: "Fluorite", value: "flu" },
         { label: "Migul VN", value: "migul" },
-        { label: "Sonic", value: "sonic" },
+        { label: "Tipa Migul", value: "tipa" },
         { label: "Proxy", value: "proxy" },
         { label: "ADR", value: "adr" }
       ])
@@ -170,7 +170,7 @@ function proxyMenu() {
         { label: "💎 Fluorite", value: "Fluorite" },
         { label: "🔥 Migul VN", value: "Migul" },
         { label: "🧠 Drip ADR", value: "ADR" },
-        { label: "⚡ Sonic", value: "Sonic" }
+        { label: "⚡ Tipa Migul", value: "Tipa_Migul" }
       ])
   );
 }
@@ -213,7 +213,7 @@ const prices = {
   Migul_Lite: { day: 50000, week: 150000, month: 350000 },
   Migul_Pro: { day: 90000, week: 225000, month: 450000 },
   ADR: { week: 90000, month: 200000 },
-  Sonic: { week: 90000, month: 200000 }
+  Tipa_Migul: { week: 70, month: 150000 }
 };
 
 function timeMenu(type) {
