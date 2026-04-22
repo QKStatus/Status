@@ -302,7 +302,7 @@ client.on("interactionCreate", async interaction => {
       components: createButtons()
     });
 
-    return interaction.update({ content: "✅ Updated!", components: [] });
+    return interaction.update({ content: "✅ Đã chỉnh sửa!", components: [] });
   }
 
   // ===== DOWNLOAD =====
@@ -399,12 +399,13 @@ client.on("interactionCreate", async interaction => {
           .addFields(
             { name: "🧾 Mã đơn", value: orderId },
             { name: "📦 Gói", value: `${formatName(type)} (${time})` },
-            { name: "💰 Giá", value: `${price.toLocaleString()}đ` }
+            { name: "💰 Giá", value: `${price.toLocaleString()}đ` },
+            { name: "⚠️ Lưu ý", value: `Vui lòng bank xong mới Done` } 
           )
       ],
       components: [
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId("confirm_bank").setLabel("✅ Xác nhận").setStyle(ButtonStyle.Success)
+          new ButtonBuilder().setCustomId("confirm_bank").setLabel("✅ Done").setStyle(ButtonStyle.Success)
         )
       ]
     });
@@ -426,15 +427,15 @@ client.on("interactionCreate", async interaction => {
       );
 
     const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`approve_${interaction.user.id}`).setLabel("✅ Duyệt").setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId(`reject_${interaction.user.id}`).setLabel("❌ Từ chối").setStyle(ButtonStyle.Danger)
+      new ButtonBuilder().setCustomId(`approve_${interaction.user.id}`).setLabel("🔑 Key").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`reject_${interaction.user.id}`).setLabel("❌ Huỷ").setStyle(ButtonStyle.Danger)
     );
 
     await logChannel.send({ embeds: [embed], components: [row] });
 
     await interaction.update({ components: [] });
 
-    return interaction.followUp({ content: "🧾 Đã gửi đơn!", ephemeral: true });
+    return interaction.followUp({ content: "🧾 Đã gửi đơn! Nếu xác nhận trước khi bank bot sẽ tự từ chối!", ephemeral: true });
   }
 
   // ===== APPROVE =====
