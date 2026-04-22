@@ -96,10 +96,10 @@ function createEmbed(data) {
     .setThumbnail(THUMBNAIL)
     .setDescription("📡 Hệ thống theo dõi theo thời gian thực\n\u200B")
     .addFields(
-      { name: "💎 FLUORITE", value: status(data["Fluorite"]) },
-      { name: "🔥 MIGUL VN", value: status(data["Migul VN"]) },
-      { name: "⚡ TIPA MIGUL", value: status(data["Tipa Migul"]) },
-      { name: "🎯 PROXY AIM", value: status(data["Proxy Aim"]) },
+      { name: "👑 FLUORITE", value: status(data["Fluorite"]) },
+      { name: "💎 MIGUL VN", value: status(data["Migul VN"]) },
+      { name: "⭐️ TIPA MIGUL", value: status(data["Tipa Migul"]) },
+      { name: "🌐 PROXY AIM", value: status(data["Proxy Aim"]) },
       { name: "🤖 DRIP ADR", value: status(data["ADR"]) },
       { name: "━━━━━━━━━━━━━━━━━━", value: "📢 Auto Update • Chính xác • Realtime" }
     )
@@ -167,10 +167,10 @@ function proxyMenu() {
       .setPlaceholder("🛒 Chọn Key")
       .addOptions([
         { label: "🌐 Proxy Vip", value: "proxy_vip" },
-        { label: "💎 Fluorite", value: "Fluorite" },
-        { label: "🔥 Migul VN", value: "Migul" },
-        { label: "🧠 Drip ADR", value: "ADR" },
-        { label: "⚡ Tipa Migul", value: "Tipa_Migul" }
+        { label: "👑 Fluorite", value: "Fluorite" },
+        { label: "💎 Migul VN", value: "Migul" },
+        { label: "🤖 Drip ADR", value: "ADR" },
+        { label: "⭐️ Tipa Migul", value: "Tipa_Migul" }
       ])
   );
 }
@@ -179,7 +179,7 @@ function proxyVipMenu() {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("proxy_vip_type")
-      .setPlaceholder("🔥 Chọn Proxy ")
+      .setPlaceholder("🌐 Select Proxy ")
       .addOptions([
         { label: "Drag Antena", value: "Drag_Antena" },
         { label: "Drag No Antena", value: "Drag_NoAntena" },
@@ -274,14 +274,14 @@ client.on("interactionCreate", async interaction => {
   // ===== ADMIN =====
   if (interaction.customId === "edit_status") {
     if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-      return interaction.reply({ content: "❌ Chỉ admin!", ephemeral: true });
+      return interaction.reply({ content: "⚠️ Mày đéo phải Admin OK !?!", ephemeral: true });
     }
-    return interaction.reply({ content: "⚙️ Chọn tool:", components: [statusToolMenu()], ephemeral: true });
+    return interaction.reply({ content: "⚙️ Chọn Hack:", components: [statusToolMenu()], ephemeral: true });
   }
 
   if (interaction.customId === "status_tool") {
     return interaction.update({
-      content: "🔧 Chọn trạng thái:",
+      content: "🛠 Edit:",
       components: [statusValueMenu(interaction.values[0])]
     });
   }
@@ -340,7 +340,7 @@ client.on("interactionCreate", async interaction => {
 
     if (interaction.values[0] === "proxy_vip") {
       return interaction.editReply({
-        content: "🔥 Chọn Proxy Vip:",
+        content: "🔥 Chọn Proxy:",
         components: [proxyVipMenu()]
       });
     }
@@ -501,7 +501,20 @@ client.on("interactionCreate", async interaction => {
     const userId = interaction.customId.split("_")[1];
     const user = await client.users.fetch(userId);
 
-    await user.send("❌ Đơn của bạn đã bị từ chối!");
+    await user.send({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("🧾 Hoá đơn")
+          .setColor("Green")
+          .addFields(
+            { name: "🧾 Mã đơn", value: order.orderId },
+            { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
+            { name: "💰 Giá", value: `${order.price.toLocaleString()}đ` },
+            { name: "⏳ HSD", value: expire },
+            { name: "🔑 Key", value: `Vui lòng hoàn tất giao dịch` }
+          )
+      ]
+    });
 
     const oldEmbed = interaction.message.embeds[0];
     const updatedEmbed = EmbedBuilder.from(oldEmbed)
