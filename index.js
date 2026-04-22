@@ -439,97 +439,101 @@ client.on("interactionCreate", async interaction => {
   }
 
   // ===== APPROVE =====
-    if (interaction.customId.startsWith("approve_")) {
-    const userId = interaction.customId.split("_")[1];
+  // ===== CLICK APPROVE (HIỆN FORM NHẬP KEY) =====
+if (interaction.customId.startsWith("approve_")) {
+  const userId = interaction.customId.split("_")[1];
 
-    const modal = new ModalBuilder()
-      .setCustomId(`sendkey_${userId}`)
-      .setTitle("Nhập key");
+  const modal = new ModalBuilder()
+    .setCustomId(`sendkey_${userId}`)
+    .setTitle("Nhập key");
 
-    const input = new TextInputBuilder()
-      .setCustomId("key")
-      .setLabel("Key")
-      .setStyle(TextInputStyle.Short);
+  const input = new TextInputBuilder()
+    .setCustomId("key")
+    .setLabel("Key")
+    .setStyle(TextInputStyle.Short);
 
-    modal.addComponents(new ActionRowBuilder().addComponents(input));
+  modal.addComponents(new ActionRowBuilder().addComponents(input));
 
-    return interaction.showModal(modal);
-  }
+  return interaction.showModal(modal);
+}
+    if (interaction.customId.startsWith("sendkey_")) {
+  const userId = interaction.customId.split("_")[1];
+  const key = interaction.fields.getTextInputValue("key");
 
-  if (interaction.customId.startsWith("sendkey_")) {
-    const userId = interaction.customId.split("_")[1];
-    const key = interaction.fields.getTextInputValue("key");
+  const order = orders.get(userId);
+  if (!order) return interaction.reply({ content: "❌ Đơn không tồn tại!", ephemeral: true });
 
-    const order = orders.get(userId);
-    if (!order) return interaction.reply({ content: "❌ Đơn không tồn tại!", ephemeral: true });
+  const expire = getExpireDate(order.time);
+  const user = await client.users.fetch(userId);
 
-    const expire = getExpireDate(order.time);
-    const user = await client.users.fetch(userId);
+  await user.send({
+    embeds: [
+      new EmbedBuilder()
+        .setTitle("🧾 Hoá đơn")
+        .setColor("Green")
+        .addFields(
+          { name: "🧾 Mã đơn", value: order.orderId },
+          { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
+          { name: "💰 Giá", value: `${order.price.toLocaleString()}đ` },
+          { name: "⏳ HSD", value: expire },
+          { name: "🔑 Key", value: `\`${key}\`` }
+        )
+    ]
+  });
 
-    await user.send({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle("🧾 Hoá đơn")
-          .setColor("Green")
-          .addFields(
-            { name: "🧾 Mã đơn", value: order.orderId },
-            { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
-            { name: "💰 Giá", value: `${order.price.toLocaleString()}đ` },
-            { name: "⏳ HSD", value: expire },
-            { name: "🔑 Key", value: `\`${key}\`` }
-          )
-      ]
-    });
+  const oldEmbed = interaction.message.embeds[0];
+  const updatedEmbed = EmbedBuilder.from(oldEmbed)
+    .setColor("Green")
+    .setFields(
+      ...oldEmbed.fields.filter(f => !f.name.includes("Trạng thái")),
+      { name: "✅ Trạng thái", value: "Đã duyệt" }
+    );
 
-    const oldEmbed = interaction.message.embeds[0];
-    const updatedEmbed = EmbedBuilder.from(oldEmbed)
-      .setColor("Green")
-      .setFields(
-        ...oldEmbed.fields.filter(f => !f.name.includes("Trạng thái")),
-        { name: "✅ Trạng thái", value: "Đã duyệt" }
-      );
+  await interaction.message.edit({ embeds: [updatedEmbed], components: [] });
 
-    await interaction.message.edit({ embeds: [updatedEmbed], components: [] });
+  orders.delete(userId);
 
-    orders.delete(userId);
-
-    return interaction.reply({ content: "✅ Đã duyệt!", ephemeral: true });
-  }
+  return interaction.reply({ content: "✅ Đã duyệt!", ephemeral: true });
+}
 
   // ===== REJECT =====
   if (interaction.customId.startsWith("reject_")) {
-    const userId = interaction.customId.split("_")[1];
-    const user = await client.users.fetch(userId);
+  const userId = interaction.customId.split("_")[1];
 
-    await user.send({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle("🧾 Hoá đơn")
-          .setColor("Green")
-          .addFields(
-            { name: "🧾 Mã đơn", value: order.orderId },
-            { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
-            { name: "💰 Giá", value: `${order.price.toLocaleString()}đ` },
-            { name: "⏳ HSD", value: expire },
-            { name: "🔑 Key", value: `Vui lòng hoàn tất giao dịch` }
-          )
-      ]
-    });
+  const order = orders.get(userId);
+  if (!order) return interaction.reply({ content: "❌ Đơn không tồn tại!", ephemeral: true });
 
-    const oldEmbed = interaction.message.embeds[0];
-    const updatedEmbed = EmbedBuilder.from(oldEmbed)
-      .setColor("Red")
-      .setFields(
-        ...oldEmbed.fields.filter(f => !f.name.includes("Trạng thái")),
-        { name: "❌ Trạng thái", value: "Đã từ chối" }
-      );
+  const expire = getExpireDate(order.time);
+  const user = await client.users.fetch(userId);
 
-    await interaction.message.edit({ embeds: [updatedEmbed], components: [] });
+  await user.send({
+    embeds: [
+      new EmbedBuilder()
+        .setTitle("🧾 Hoá đơn")
+        .setColor("Red")
+        .addFields(
+          { name: "🧾 Mã đơn", value: order.orderId },
+          { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
+          { name: "💰 Giá", value: `${order.price.toLocaleString()}đ` },
+          { name: "⏳ HSD", value: expire },
+          { name: "🔑 Key", value: "❌ Đơn đã bị huỷ hoặc chưa thanh toán" }
+        )
+    ]
+  });
 
-    orders.delete(userId);
+  const oldEmbed = interaction.message.embeds[0];
+  const updatedEmbed = EmbedBuilder.from(oldEmbed)
+    .setColor("Red")
+    .setFields(
+      ...oldEmbed.fields.filter(f => !f.name.includes("Trạng thái")),
+      { name: "❌ Trạng thái", value: "Đã từ chối" }
+    );
 
-    return interaction.reply({ content: "❌ Đã từ chối!", ephemeral: true });
-  }
-});
+  await interaction.message.edit({ embeds: [updatedEmbed], components: [] });
+
+  orders.delete(userId);
+
+  return interaction.reply({ content: "❌ Đã từ chối!", ephemeral: true });
+}
 
 client.login(TOKEN);
