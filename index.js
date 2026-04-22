@@ -439,8 +439,12 @@ client.on("interactionCreate", async interaction => {
   }
 
   // ===== APPROVE =====
-  // ===== CLICK APPROVE (HIỆN FORM NHẬP KEY) =====
+// ===== APPROVE BUTTON =====
 if (interaction.customId.startsWith("approve_")) {
+  if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+    return interaction.reply({ content: "❌ Chỉ admin!", ephemeral: true });
+  }
+
   const userId = interaction.customId.split("_")[1];
 
   const modal = new ModalBuilder()
@@ -450,38 +454,59 @@ if (interaction.customId.startsWith("approve_")) {
   const input = new TextInputBuilder()
     .setCustomId("key")
     .setLabel("Key")
-    .setStyle(TextInputStyle.Short);
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true);
 
   modal.addComponents(new ActionRowBuilder().addComponents(input));
 
   return interaction.showModal(modal);
 }
-    if (interaction.customId.startsWith("sendkey_")) {
+
+
+// ===== MODAL SUBMIT (SEND KEY) =====
+if (interaction.isModalSubmit() && interaction.customId.startsWith("sendkey_")) {
+  if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+    return interaction.reply({ content: "❌ Chỉ admin!", ephemeral: true });
+  }
+
   const userId = interaction.customId.split("_")[1];
   const key = interaction.fields.getTextInputValue("key");
 
   const order = orders.get(userId);
-  if (!order) return interaction.reply({ content: "❌ Đơn không tồn tại!", ephemeral: true });
+  if (!order) {
+    return interaction.reply({ content: "❌ Đơn không tồn tại!", ephemeral: true });
+  }
 
   const expire = getExpireDate(order.time);
-  const user = await client.users.fetch(userId);
 
-  await user.send({
-    embeds: [
-      new EmbedBuilder()
-        .setTitle("🧾 Hoá đơn")
-        .setColor("Green")
-        .addFields(
-          { name: "🧾 Mã đơn", value: order.orderId },
-          { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
-          { name: "💰 Giá", value: `${order.price.toLocaleString()}đ` },
-          { name: "⏳ HSD", value: expire },
-          { name: "🔑 Key", value: `\`${key}\`` }
-        )
-    ]
-  });
+  try {
+    const user = await client.users.fetch(userId);
 
+    await user.send({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("🧾 Hoá đơn")
+          .setColor("Green")
+          .addFields(
+            { name: "🧾 Mã đơn", value: order.orderId },
+            { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
+            { name: "💰 Giá", value: `${order.price.toLocaleString()}đ` },
+            { name: "⏳ HSD", value: expire },
+            { name: "🔑 Key", value: `\`${key}\`` },
+            { name: "✅ Trạng thái", value: "Đã duyệt" }
+          )
+      ]
+    });
+  } catch (err) {
+    return interaction.reply({
+      content: "❌ Không thể gửi DM cho user (user tắt DM)!",
+      ephemeral: true
+    });
+  }
+
+  // ===== UPDATE EMBED ADMIN =====
   const oldEmbed = interaction.message.embeds[0];
+
   const updatedEmbed = EmbedBuilder.from(oldEmbed)
     .setColor("Green")
     .setFields(
@@ -489,7 +514,10 @@ if (interaction.customId.startsWith("approve_")) {
       { name: "✅ Trạng thái", value: "Đã duyệt" }
     );
 
-  await interaction.message.edit({ embeds: [updatedEmbed], components: [] });
+  await interaction.message.edit({
+    embeds: [updatedEmbed],
+    components: []
+  });
 
   orders.delete(userId);
 
@@ -497,15 +525,21 @@ if (interaction.customId.startsWith("approve_")) {
 }
 
   // ===== REJECT =====
-  if (interaction.customId.startsWith("reject_")) {
+if (interaction.customId.startsWith("reject_")) {
   const userId = interaction.customId.split("_")[1];
-
   const order = orders.get(userId);
-  if (!order) return interaction.reply({ content: "❌ Đơn không tồn tại!", ephemeral: true });
 
-  const expire = getExpireDate(order.time);
+  if (!order) {
+    return interaction.reply({ content: "❌ Đơn không tồn tại!", ephemeral: true });
+  }
+
   const user = await client.users.fetch(userId);
+  const expire = getExpireDate(order.time);
 
+  // 🔑 Có thể random key fake hoặc để "Không có"
+  const fakeKey = "NULL-KEY-REJECT";
+
+  // ===== GỬI EMBED GIỐNG DUYỆT =====
   await user.send({
     embeds: [
       new EmbedBuilder()
@@ -516,11 +550,12 @@ if (interaction.customId.startsWith("approve_")) {
           { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
           { name: "💰 Giá", value: `${order.price.toLocaleString()}đ` },
           { name: "⏳ HSD", value: expire },
-          { name: "🔑 Key", value: "❌ Đơn đã bị huỷ hoặc chưa thanh toán" }
+          { name: "⚠️ Cảnh báo", value: `Đơn đã bị huỷ` }
         )
     ]
   });
 
+  // ===== UPDATE EMBED ADMIN =====
   const oldEmbed = interaction.message.embeds[0];
   const updatedEmbed = EmbedBuilder.from(oldEmbed)
     .setColor("Red")
