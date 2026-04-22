@@ -41,7 +41,7 @@ function loadData() {
     return {
       Fluorite: "safe",
       "Migul VN": "safe",
-      Sonic: "safe",
+      "Tipa Migul": "safe",
       "Proxy Aim": "safe",
       ADR: "safe"
     };
@@ -98,7 +98,7 @@ function createEmbed(data) {
     .addFields(
       { name: "💎 FLUORITE", value: status(data["Fluorite"]) },
       { name: "🔥 MIGUL VN", value: status(data["Migul VN"]) },
-      { name: "⚡ TIPA MIGUL", value: status(data["Sonic"]) },
+      { name: "⚡ TIPA MIGUL", value: status(data["Tipa Migul"]) },
       { name: "🎯 PROXY AIM", value: status(data["Proxy Aim"]) },
       { name: "🤖 DRIP ADR", value: status(data["ADR"]) },
       { name: "━━━━━━━━━━━━━━━━━━", value: "📢 Auto Update • Chính xác • Realtime" }
@@ -111,9 +111,9 @@ function createEmbed(data) {
 function createButtons() {
   return [
     new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId("edit_status").setLabel("👑 ADMIN").setStyle(ButtonStyle.Primary),
       new ButtonBuilder().setCustomId("download_menu").setLabel("📥 Link Tải").setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId("buy_proxy").setLabel("🛒 Buy Key").setStyle(ButtonStyle.Success)
+      new ButtonBuilder().setCustomId("buy_proxy").setLabel("🛒 Buy Key").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId("edit_status").setLabel("👑 ADMIN").setStyle(ButtonStyle.Primary)
     )
   ];
 }
@@ -166,7 +166,7 @@ function proxyMenu() {
       .setCustomId("proxy_type")
       .setPlaceholder("🛒 Chọn Key")
       .addOptions([
-        { label: "💎 Proxy Vip", value: "proxy_vip" },
+        { label: "🌐 Proxy Vip", value: "proxy_vip" },
         { label: "💎 Fluorite", value: "Fluorite" },
         { label: "🔥 Migul VN", value: "Migul" },
         { label: "🧠 Drip ADR", value: "ADR" },
@@ -316,12 +316,12 @@ client.on("interactionCreate", async interaction => {
     const links = {
       flu: "https://www.mediafire.com/file/jwvk91kyhd1hdag/ob53_1.7.4.ipa/file",
       migul: "https://ipa.authtool.app/view/69e42db7e95f3e47a8152b8f",
-      sonic: "Chưa Update",
+      tipa: "Chưa Update",
       adr: "https://www.mediafire.com/file/bie03xh4vag0edx/DRIPCLIENT_V1.3.TP.apks/file"
     };
 
     if (interaction.values[0] === "proxy") {
-      return interaction.editReply({ content: "🔒 Mua để được cấp IP!", components: [] });
+      return interaction.editReply({ content: "🔒 Mua để được cấp Pem & Port!", components: [] });
     }
 
     return interaction.editReply({
@@ -332,7 +332,7 @@ client.on("interactionCreate", async interaction => {
 
   // ===== BUY =====
   if (interaction.customId === "buy_proxy") {
-    return interaction.reply({ content: "💰 Chọn loại:", components: [proxyMenu()], ephemeral: true });
+    return interaction.reply({ content: "🛒 Chọn loại:", components: [proxyMenu()], ephemeral: true });
   }
 
   if (interaction.customId === "proxy_type") {
