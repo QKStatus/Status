@@ -41,7 +41,7 @@ function loadData() {
     return {
       Fluorite: "safe",
       "Migul VN": "safe",
-      Tipa Migul: "safe",
+      Sonic: "safe",
       "Proxy Aim": "safe",
       ADR: "safe"
     };
