@@ -213,7 +213,7 @@ const prices = {
   Migul_Lite: { day: 50000, week: 150000, month: 350000 },
   Migul_Pro: { day: 90000, week: 225000, month: 450000 },
   ADR: { week: 90000, month: 200000 },
-  Tipa_Migul: { week: 70, month: 150000 }
+  Tipa_Migul: { week: 70000, month: 150000 }
 };
 
 function timeMenu(type) {
@@ -570,5 +570,6 @@ if (interaction.customId.startsWith("reject_")) {
 
   return interaction.reply({ content: "❌ Đã từ chối!", ephemeral: true });
 }
+});
 
 client.login(TOKEN);
