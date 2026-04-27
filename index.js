@@ -92,18 +92,18 @@ function createEmbed(data) {
 
   return new EmbedBuilder()
     .setColor("#00ffae")
-    .setTitle("🚀 TRẠNG THÁI HACK FREE FIRE")
+    .setTitle("🚀 FREE FIRE HACK STATUS")
     .setThumbnail(THUMBNAIL)
-    .setDescription("📡 Hệ thống theo dõi theo thời gian thực\n\u200B")
+    .setDescription("📡 The system updates in real time\n\u200B")
     .addFields(
       { name: "👑 FLUORITE", value: status(data["Fluorite"]) },
       { name: "💎 MIGUL VN", value: status(data["Migul VN"]) },
       { name: "⭐️ TIPA MIGUL", value: status(data["Tipa Migul"]) },
       { name: "🌐 PROXY AIM", value: status(data["Proxy Aim"]) },
       { name: "🤖 DRIP ADR", value: status(data["ADR"]) },
-      { name: "━━━━━━━━━━━━━━━━━━", value: "📢 Auto Update • Chính xác • Realtime" }
+      { name: "━━━━━━━━━━━━━━━━━━━━━━━", value: "📢 Auto Update • Chính xác • Realtime" }
     )
-    .setFooter({ text: "⚡ Premium Bot System - By Khánh" })
+    .setFooter({ text: "⚡ Premium Bot System - Status Time" })
     .setTimestamp();
 }
 
@@ -181,11 +181,11 @@ function proxyVipMenu() {
       .setCustomId("proxy_vip_type")
       .setPlaceholder("🌐 Select Proxy ")
       .addOptions([
-        { label: "Drag Antena", value: "Drag_Antena" },
-        { label: "Drag No Antena", value: "Drag_NoAntena" },
-        { label: "Body No Antena", value: "Body_NoAntena" },
-        { label: "Bụng Antena", value: "Bung_Antena" },
-        { label: "Bụng No Antena", value: "Bung_NoAntena" }
+        { label: "Drag Định vị", value: "Drag_Antena" },
+        { label: "Drag Ko Định vị", value: "Drag_NoAntena" },
+        { label: "Body No Tay Dài", value: "Body_NoAntena" },
+        { label: "Bụng Định vị", value: "Bung_Antena" },
+        { label: "Bụng Ko Định vị", value: "Bung_NoAntena" }
       ])
   );
 }
@@ -195,8 +195,8 @@ function migulMenu() {
     new StringSelectMenuBuilder()
       .setCustomId("migul_type")
       .addOptions([
-        { label: "Lite", value: "Migul_Lite" },
-        { label: "Pro", value: "Migul_Pro" }
+        { label: "Ver Lite", value: "Migul_Lite" },
+        { label: "Ver Pro", value: "Migul_Pro" }
       ])
   );
 }
@@ -204,7 +204,7 @@ function migulMenu() {
 // ===== PRICES =====
 const prices = {
   Drag_Antena: { week: 100000, month: 200000 },
-  Drag_NoAntena: { week: 125000, month: 225000 },
+  Drag_NoAntena: { week: 120000, month: 220000 },
   Body_NoAntena: { week: 90000, month: 180000 },
   Bung_Antena: { week: 100000, month: 200000 },
   Bung_NoAntena: { week: 100000, month: 200000 },
@@ -274,9 +274,9 @@ client.on("interactionCreate", async interaction => {
   // ===== ADMIN =====
   if (interaction.customId === "edit_status") {
     if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-      return interaction.reply({ content: "⚠️ Mày đéo phải Admin OK !?!", ephemeral: true });
+      return interaction.reply({ content: "⚠️ Bạn không phải ADMIN !?!", ephemeral: true });
     }
-    return interaction.reply({ content: "⚙️ Chọn Hack:", components: [statusToolMenu()], ephemeral: true });
+    return interaction.reply({ content: "📦 Select Hack:", components: [statusToolMenu()], ephemeral: true });
   }
 
   if (interaction.customId === "status_tool") {
@@ -302,7 +302,7 @@ client.on("interactionCreate", async interaction => {
       components: createButtons()
     });
 
-    return interaction.update({ content: "✅ Đã chỉnh sửa!", components: [] });
+    return interaction.update({ content: "📬 Đã chỉnh sửa!", components: [] });
   }
 
   // ===== DOWNLOAD =====
@@ -321,7 +321,7 @@ client.on("interactionCreate", async interaction => {
     };
 
     if (interaction.values[0] === "proxy") {
-      return interaction.editReply({ content: "🔒 Mua để được cấp Pem & Port!", components: [] });
+      return interaction.editReply({ content: "🔒 Mua để được cấp Pem , Port & IP!", components: [] });
     }
 
     return interaction.editReply({
@@ -340,20 +340,20 @@ client.on("interactionCreate", async interaction => {
 
     if (interaction.values[0] === "proxy_vip") {
       return interaction.editReply({
-        content: "🔥 Chọn Proxy:",
+        content: "📩 Chọn Proxy:",
         components: [proxyVipMenu()]
       });
     }
 
     if (interaction.values[0] === "Migul") {
       return interaction.editReply({
-        content: "🔥 Chọn phiên bản:",
+        content: "🗂 Chọn phiên bản:",
         components: [migulMenu()]
       });
     }
 
     return interaction.editReply({
-      content: "⏳ Chọn thời gian:",
+      content: "⏳ Chọn thời hạn:",
       components: [timeMenu(interaction.values[0])]
     });
   }
@@ -361,7 +361,7 @@ client.on("interactionCreate", async interaction => {
   if (interaction.customId === "proxy_vip_type") {
     await interaction.deferUpdate();
     return interaction.editReply({
-      content: "⏳ Chọn thời gian:",
+      content: "⏳ Chọn thời hạn:",
       components: [timeMenu(interaction.values[0])]
     });
   }
@@ -369,7 +369,7 @@ client.on("interactionCreate", async interaction => {
   if (interaction.customId === "migul_type") {
     await interaction.deferUpdate();
     return interaction.editReply({
-      content: "⏳ Chọn thời gian:",
+      content: "⏳ Chọn thời hạn:",
       components: [timeMenu(interaction.values[0])]
     });
   }
@@ -378,7 +378,7 @@ client.on("interactionCreate", async interaction => {
     await interaction.deferUpdate();
 
     if (orders.has(interaction.user.id)) {
-      return interaction.editReply({ content: "⚠️ Bạn đang có đơn chưa xử lý!", components: [] });
+      return interaction.editReply({ content: "⚠️ Lỗi ! Đơn hàng trước đó chưa xử lí .", components: [] });
     }
 
     const type = interaction.customId.replace("time_", "");
@@ -398,14 +398,14 @@ client.on("interactionCreate", async interaction => {
           .setImage(qr)
           .addFields(
             { name: "🧾 Mã đơn", value: orderId },
-            { name: "📦 Gói", value: `${formatName(type)} (${time})` },
-            { name: "💰 Giá", value: `${price.toLocaleString()}đ` },
-            { name: "⚠️ Lưu ý", value: `Vui lòng bank xong mới Done` } 
+            { name: "📦 Vật phẩm", value: `${formatName(type)} (${time})` },
+            { name: "💸 Giá", value: `${price.toLocaleString()}đ` },
+            { name: "⚠️ Lưu ý", value: `VUI LÒNG BANK MỚI XÁC NHẬN` } 
           )
       ],
       components: [
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId("confirm_bank").setLabel("✅ Done").setStyle(ButtonStyle.Success)
+          new ButtonBuilder().setCustomId("confirm_bank").setLabel("�Yêu cầu").setStyle(ButtonStyle.Success)
         )
       ]
     });
@@ -422,8 +422,8 @@ client.on("interactionCreate", async interaction => {
       .addFields(
         { name: "🧾 Mã đơn", value: order.orderId },
         { name: "👤 Người mua", value: `<@${interaction.user.id}>` },
-        { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
-        { name: "💰 Giá", value: `${order.price.toLocaleString()}đ` }
+        { name: "📦 Vật phẩm", value: `${formatName(order.type)} (${order.time})` },
+        { name: "💸 Giá", value: `${order.price.toLocaleString()}đ` }
       );
 
     const row = new ActionRowBuilder().addComponents(
@@ -435,14 +435,14 @@ client.on("interactionCreate", async interaction => {
 
     await interaction.update({ components: [] });
 
-    return interaction.followUp({ content: "🧾 Đã gửi đơn! Nếu xác nhận trước khi bank bot sẽ tự từ chối!", ephemeral: true });
+    return interaction.followUp({ content: "🧾 Đơn hàng của bạn đã được gửi", ephemeral: true });
   }
 
   // ===== APPROVE =====
 // ===== APPROVE BUTTON =====
 if (interaction.customId.startsWith("approve_")) {
   if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-    return interaction.reply({ content: "❌ Chỉ admin!", ephemeral: true });
+    return interaction.reply({ content: "Cần role ADMIN để thực hiện!", ephemeral: true });
   }
 
   const userId = interaction.customId.split("_")[1];
@@ -466,7 +466,7 @@ if (interaction.customId.startsWith("approve_")) {
 // ===== MODAL SUBMIT (SEND KEY) =====
 if (interaction.isModalSubmit() && interaction.customId.startsWith("sendkey_")) {
   if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-    return interaction.reply({ content: "❌ Chỉ admin!", ephemeral: true });
+    return interaction.reply({ content: "Cần role ADMIN để thực hiện!", ephemeral: true });
   }
 
   const userId = interaction.customId.split("_")[1];
@@ -489,11 +489,11 @@ if (interaction.isModalSubmit() && interaction.customId.startsWith("sendkey_")) 
           .setColor("Green")
           .addFields(
             { name: "🧾 Mã đơn", value: order.orderId },
-            { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
-            { name: "💰 Giá", value: `${order.price.toLocaleString()}đ` },
+            { name: "📦 Vật phẩm", value: `${formatName(order.type)} (${order.time})` },
+            { name: "💸 Giá", value: `${order.price.toLocaleString()}đ` },
             { name: "⏳ HSD", value: expire },
             { name: "🔑 Key", value: `\`${key}\`` },
-            { name: "✅ Trạng thái", value: "Đã duyệt" }
+            { name: "🌐 Trạng thái", value: "Đã duyệt đơn" }
           )
       ]
     });
@@ -547,10 +547,10 @@ if (interaction.customId.startsWith("reject_")) {
         .setColor("Red")
         .addFields(
           { name: "🧾 Mã đơn", value: order.orderId },
-          { name: "📦 Gói", value: `${formatName(order.type)} (${order.time})` },
-          { name: "💰 Giá", value: `${order.price.toLocaleString()}đ` },
+          { name: "📦 Vật phẩm", value: `${formatName(order.type)} (${order.time})` },
+          { name: "💸 Giá", value: `${order.price.toLocaleString()}đ` },
           { name: "⏳ HSD", value: expire },
-          { name: "⚠️ Cảnh báo", value: `Đơn đã bị huỷ` }
+          { name: "🌐 Trạng thái", value: `Đéo bank mà đòi có key` }
         )
     ]
   });
