@@ -315,7 +315,7 @@ client.on("interactionCreate", async interaction => {
 
     const links = {
       flu: "https://www.mediafire.com/file/jwvk91kyhd1hdag/ob53_1.7.4.ipa/file",
-      migul: "https://ipa.authtool.app/view/69e42db7e95f3e47a8152b8f",
+      migul: "https://ipa.authtool.app/view/69ef2cc3e95f3e47a8307b0c",
       tipa: "Chưa Update",
       adr: "https://www.mediafire.com/file/bie03xh4vag0edx/DRIPCLIENT_V1.3.TP.apks/file"
     };
