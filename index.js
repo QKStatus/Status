@@ -405,7 +405,7 @@ client.on("interactionCreate", async interaction => {
       ],
       components: [
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId("confirm_bank").setLabel("�Yêu cầu").setStyle(ButtonStyle.Success)
+          new ButtonBuilder().setCustomId("confirm_bank").setLabel("📩 Yêu cầu").setStyle(ButtonStyle.Success)
         )
       ]
     });
